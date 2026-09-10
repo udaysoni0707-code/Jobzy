@@ -84,31 +84,31 @@ export function SkillExtractorWidget() {
   return (
     <Card className="border-slate-200 dark:border-slate-800 shadow-md">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <CardTitle className="text-base">Live NLP Skill Extraction & Taxonomy Normalizer</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-sm sm:text-base">Live NLP Skill Extraction & Taxonomy Normalizer</CardTitle>
+              <CardDescription className="text-xs mt-0.5">
                 Extracts standardized skills, normalizes industry acronyms, and assigns confidence scores.
               </CardDescription>
             </div>
           </div>
-          <Badge variant="blue">Deterministic NLP Pipeline</Badge>
+          <Badge variant="blue" className="self-start sm:self-auto shrink-0">Deterministic NLP</Badge>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
         {/* Preset chips */}
-        <div className="flex flex-wrap gap-2 items-center text-xs">
-          <span className="text-slate-500 font-medium">Try Industry Presets:</span>
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 items-center text-xs">
+          <span className="text-slate-500 font-medium block w-full sm:w-auto mb-1 sm:mb-0">Try Presets:</span>
           {samplePresets.map((p, idx) => (
             <button
               key={idx}
               onClick={() => setInputText(p.text)}
-              className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:text-blue-600 dark:hover:text-blue-400 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-slate-700"
+              className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:text-blue-600 dark:hover:text-blue-400 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-slate-700 text-[11px] sm:text-xs"
             >
               {p.label}
             </button>
@@ -121,19 +121,19 @@ export function SkillExtractorWidget() {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             rows={3}
-            className="w-full p-3 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full p-3 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="Paste raw job description, technical curriculum snippet, or training requirements..."
           />
         </div>
 
         {/* Action Button */}
-        <div className="flex justify-end">
+        <div className="flex justify-stretch sm:justify-end">
           <Button
             onClick={runAnalysis}
             isLoading={isAnalyzing}
             variant="primary"
             size="md"
-            className="gap-2"
+            className="w-full sm:w-auto gap-2 justify-center"
           >
             <Zap className="w-4 h-4 text-amber-400" />
             Extract & Normalize Skills
@@ -142,11 +142,11 @@ export function SkillExtractorWidget() {
 
         {/* Results view */}
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
             <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
               Normalized Skills Detected ({skills.length})
             </h4>
-            <span className="text-xs text-slate-500">Synonyms mapped to Maharashtra Skill Taxonomy</span>
+            <span className="text-[11px] text-slate-500">Synonyms mapped to Maharashtra Skill Taxonomy</span>
           </div>
 
           {skills.length === 0 ? (

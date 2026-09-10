@@ -51,33 +51,33 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col gap-16 sm:gap-24 pb-20">
       {/* 1. HERO SECTION */}
-      <section className="relative pt-12 sm:pt-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
+      <section className="relative pt-12 sm:pt-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center overflow-hidden">
         {/* Subtle background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-blue-500/10 dark:bg-blue-600/15 rounded-full blur-3xl -z-10 pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[600px] h-[350px] bg-blue-500/10 dark:bg-blue-600/15 rounded-full blur-3xl -z-10 pointer-events-none" />
 
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 mb-6 animate-fade-in">
-          <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-          <span>Smart India Hackathon 2026 • Problem Statement SIH26134</span>
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 mb-6 animate-fade-in max-w-full text-center">
+          <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+          <span className="truncate sm:whitespace-normal">Smart India Hackathon 2026 • SIH26134</span>
         </div>
 
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight max-w-4xl mx-auto leading-[1.15]">
+        <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight max-w-4xl mx-auto leading-[1.2] sm:leading-[1.15] break-words">
           Bridge the Gap Between <span className="text-blue-600 dark:text-blue-400">Industry Demand</span> and Skill Development
         </h1>
 
-        <p className="mt-6 text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
+        <p className="mt-4 sm:mt-6 text-sm sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
           SkillAlign uses industry signals, skill intelligence, and curriculum analysis to identify emerging skill gaps and convert them into actionable training and career recommendations across Maharashtra.
         </p>
 
         {/* Hero CTAs */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-          <Link href="/dashboard/government">
-            <Button size="lg" variant="primary" className="shadow-lg shadow-blue-500/10 gap-2">
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
+          <Link href="/dashboard/government" className="w-full sm:w-auto">
+            <Button size="lg" variant="primary" className="w-full sm:w-auto shadow-lg shadow-blue-500/10 gap-2">
               <span>Explore Skill Intelligence</span>
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
-          <a href="#pipeline">
-            <Button size="lg" variant="outline" className="gap-2">
+          <a href="#pipeline" className="w-full sm:w-auto">
+            <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2">
               <span>See How It Works</span>
               <ChevronRight className="w-4 h-4" />
             </Button>
@@ -85,22 +85,22 @@ export default function LandingPage() {
         </div>
 
         {/* State Trust Metric Badges */}
-        <div className="mt-14 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 text-left">
-          <div className="p-4 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xs">
-            <span className="text-2xl sm:text-3xl font-extrabold text-blue-600 dark:text-blue-400 block">36</span>
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Maharashtra Districts Covered</span>
+        <div className="mt-10 sm:mt-14 pt-8 border-t border-slate-200/80 dark:border-slate-800/80 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 text-left">
+          <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xs">
+            <span className="text-xl sm:text-3xl font-extrabold text-blue-600 dark:text-blue-400 block">36</span>
+            <span className="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 leading-tight block mt-0.5">Maharashtra Districts Covered</span>
           </div>
-          <div className="p-4 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xs">
-            <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 block">94%</span>
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">EV & Automation Accuracy</span>
+          <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xs">
+            <span className="text-xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 block">94%</span>
+            <span className="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 leading-tight block mt-0.5">EV & Automation Accuracy</span>
           </div>
-          <div className="p-4 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xs">
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 block">1,850+</span>
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Active Industry Demand Signals</span>
+          <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xs">
+            <span className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 block">1,850+</span>
+            <span className="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 leading-tight block mt-0.5">Active Industry Signals</span>
           </div>
-          <div className="p-4 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xs">
-            <span className="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400 block">Closed-Loop</span>
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Curriculum Feedback System</span>
+          <div className="p-3 sm:p-4 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 backdrop-blur-xs">
+            <span className="text-xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400 block">Closed-Loop</span>
+            <span className="text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 leading-tight block mt-0.5">Curriculum Feedback System</span>
           </div>
         </div>
       </section>

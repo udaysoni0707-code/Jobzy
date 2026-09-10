@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/components/ui/toast';
 import { CommandPalette } from '@/components/ui/command-palette';
@@ -6,6 +6,12 @@ import { DemoBar } from '@/components/demo/demo-bar';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { AuthService } from '@/lib/auth';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
   title: 'SkillAlign — Industry–Skill Intelligence & Curriculum Alignment Platform',
@@ -31,8 +37,8 @@ export default async function RootLayout({
   const currentUser = await AuthService.getCurrentUser();
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className="font-sans min-h-screen flex flex-col bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 antialiased">
+    <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
+      <body className="font-sans min-h-screen w-full overflow-x-hidden flex flex-col bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 antialiased">
         <ToastProvider>
           <Navbar currentUser={currentUser} />
           <main className="flex-1 w-full">{children}</main>
