@@ -95,14 +95,14 @@ export function DemoBar() {
   };
 
   return (
-    <aside aria-label="SIH 2026 Judge Demo Controller" className="fixed bottom-3 left-3 sm:bottom-4 sm:left-4 z-40 max-w-[calc(100vw-1.5rem)]">
+    <aside aria-label="Jobzy Demo Role Controller" className="fixed bottom-3 left-3 sm:bottom-4 sm:left-4 z-40 max-w-[calc(100vw-1.5rem)]">
       <div className="bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-700/80 p-2 backdrop-blur-md">
         {isExpanded && (
           <div className="p-3 mb-2 border-b border-slate-800 space-y-2 w-[calc(100vw-3rem)] sm:w-72 max-w-xs animate-slide-up">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Zap className="w-3.5 h-3.5 text-amber-400" />
-                SIH 2026 Judge Controller
+                Jobzy Role Switcher
               </span>
             </div>
 

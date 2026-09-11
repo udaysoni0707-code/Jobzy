@@ -13,7 +13,7 @@ export function Footer() {
             <span className="text-lg font-bold text-slate-900 dark:text-slate-100">JOBZY</span>
           </div>
           <p className="text-xs text-slate-500 max-w-md leading-relaxed">
-            From Industry Demand to Future-Ready Skills. Developed for Smart India Hackathon 2026 under the auspices of the Government of Maharashtra.
+            From Industry Demand to Future-Ready Skills. Developed under the auspices of the Government of Maharashtra.
           </p>
           <div className="text-[11px] text-slate-400">
             Continuous feedback loop between industrial demand signals, AI skill extraction, curriculum alignment, and student readiness.
@@ -79,7 +79,7 @@ export function Footer() {
 
       <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-400">
         <div>
-          © 2026 Jobzy • Built for SIH 2026 • Government of Maharashtra
+          © 2026 Jobzy • Government of Maharashtra
         </div>
         <div className="italic">
           * Prototype visualization — synthetic demo data. Demonstrates proposed system architecture.

@@ -44,7 +44,7 @@ export default function LandingPage() {
     },
     {
       q: 'Is the district data real or synthetic?',
-      a: 'The platform architecture is designed to ingest real job board feeds, EPFO data, and DTE databases. During hackathon demonstrations, synthetic prototype datasets representing Maharashtra districts are utilized and clearly badged.',
+      a: 'The platform architecture is designed to ingest real job board feeds, EPFO data, and DTE databases. Synthetic prototype datasets representing Maharashtra districts are utilized and clearly badged.',
     },
   ];
 
@@ -57,7 +57,7 @@ export default function LandingPage() {
 
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 mb-6 animate-fade-in max-w-full text-center">
           <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-          <span className="truncate sm:whitespace-normal">Smart India Hackathon 2026</span>
+          <span className="truncate sm:whitespace-normal">AI-Powered Skill Intelligence Platform</span>
         </div>
 
         <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight max-w-4xl mx-auto leading-[1.2] sm:leading-[1.15] break-words">

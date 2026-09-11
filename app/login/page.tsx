@@ -59,7 +59,7 @@ export default function LoginPage() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/20 border border-blue-400/30 text-blue-300 mb-6">
               <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-              <span>Smart India Hackathon 2026</span>
+              <span>AI-Powered Skill Intelligence Platform</span>
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
