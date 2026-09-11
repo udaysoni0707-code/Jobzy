@@ -20,6 +20,7 @@ import {
   ArrowRight,
   Clock,
   ChevronLeft,
+  RotateCcw,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 
@@ -171,6 +172,17 @@ function MessagesPageContent() {
       toast.error('Network error', 'Unable to reach the messaging server.');
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleClearChat = async () => {
+    if (!activeContact) return;
+    try {
+      await fetch(`/api/messages?targetUserId=${activeContact.id}`, { method: 'DELETE' });
+      setMessages([]);
+      toast.success('Chat Reset', 'Conversation history cleared for this contact.');
+    } catch {
+      toast.error('Failed to clear chat');
     }
   };
 
@@ -341,7 +353,18 @@ function MessagesPageContent() {
                   </div>
                 </div>
 
-                <div className="shrink-0 ml-3">{getRoleBadge(activeContact.role)}</div>
+                <div className="flex items-center gap-2 shrink-0 ml-3">
+                  <button
+                    type="button"
+                    onClick={handleClearChat}
+                    title="Clear chat history"
+                    className="px-2.5 py-1 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer text-xs flex items-center gap-1 border border-transparent hover:border-rose-200 dark:hover:border-rose-900"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline text-[11px] font-medium">Clear Chat</span>
+                  </button>
+                  {getRoleBadge(activeContact.role)}
+                </div>
               </div>
 
               {/* Chat Messages List */}

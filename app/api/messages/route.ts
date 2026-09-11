@@ -286,3 +286,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error?.message || 'Failed to send message' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    let currentUser = await AuthService.getCurrentUser();
+    if (!currentUser) {
+      const defaultUser = await db.user.findFirst({ where: { role: 'STUDENT' } });
+      if (defaultUser) currentUser = defaultUser as any;
+    }
+    if (!currentUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const targetUserId = searchParams.get('targetUserId');
+
+    if (!targetUserId) {
+      return NextResponse.json({ error: 'targetUserId is required' }, { status: 400 });
+    }
+
+    await db.message.deleteMany({
+      where: {
+        OR: [
+          { senderId: currentUser.id, receiverId: targetUserId },
+          { senderId: targetUserId, receiverId: currentUser.id },
+        ],
+      },
+    });
+
+    return NextResponse.json({ success: true, message: 'Conversation cleared' });
+  } catch (error: any) {
+    console.error('Error clearing conversation:', error);
+    return NextResponse.json({ error: 'Failed to clear conversation' }, { status: 500 });
+  }
+}

@@ -129,11 +129,22 @@ function detectIntent(
     return { type: 'MEMORY_QUERY', confidence: 0.95 };
   }
 
-  // 2. Personal Introduction / "Know you personally"
+  // 2. Personal Introduction / "Know you personally" / "Tum kaun ho"
   if (
     lower.includes('know you personally') ||
     lower.includes('know more about you') ||
     lower.includes('who are you') ||
+    lower.includes('who r u') ||
+    lower.includes('who r you') ||
+    lower.includes('tum kon ho') ||
+    lower.includes('tum kaun ho') ||
+    lower.includes('kaun ho tum') ||
+    lower.includes('aap kaun ho') ||
+    lower.includes('aap kon ho') ||
+    lower.includes('apne baare me') ||
+    lower.includes('apne bare me') ||
+    lower.includes('janna chahta hu') ||
+    lower.includes('janna chahti hu') ||
     lower.includes('tell me about yourself') ||
     lower.includes('introduce yourself') ||
     lower.includes('what do you do') ||
@@ -142,13 +153,24 @@ function detectIntent(
     return { type: 'PERSONAL_INTRO', confidence: 0.95 };
   }
 
-  // 3. Polite greetings
+  // 3. Polite greetings / "Kaise ho"
   if (
     lower === 'hi' ||
     lower === 'hello' ||
     lower === 'hey' ||
     lower === 'hey there' ||
     lower === 'namaste' ||
+    lower === 'pranam' ||
+    lower.includes('kaise ho') ||
+    lower.includes('kese ho') ||
+    lower.includes('kya haal') ||
+    lower.includes('kya chal raha') ||
+    lower.includes('sab theek') ||
+    lower.includes('whatsup') ||
+    lower.includes("what's up") ||
+    lower.includes('wassup') ||
+    lower.includes('watsup') ||
+    lower === 'sup' ||
     lower.startsWith('hi ') ||
     lower.startsWith('hello ') ||
     lower.startsWith('hey ')
@@ -161,15 +183,18 @@ function detectIntent(
     lower.includes('thank') ||
     lower.includes('thx') ||
     lower.includes('dhanyawad') ||
+    lower.includes('shukriya') ||
     lower === 'thanks' ||
     lower === 'thanks!' ||
+    lower.includes('thanks bro') ||
+    lower.includes('thanks bhai') ||
     lower === 'bye' ||
     lower === 'goodbye'
   ) {
     return { type: 'POLITE_CLOSING', confidence: 0.9 };
   }
 
-  // 5. Follow-up expressions ("tell me more", "what about testing", "why?", "explain", "how?")
+  // 5. Follow-up expressions ("tell me more", "what about testing", "aur batao")
   if (
     lower === 'tell me more' ||
     lower === 'tell me more.' ||
@@ -178,6 +203,11 @@ function detectIntent(
     lower === 'explain further' ||
     lower === 'what about testing?' ||
     lower === 'what about testing' ||
+    lower.includes('aur batao') ||
+    lower.includes('or batao') ||
+    lower.includes('aage batao') ||
+    lower.includes('kuch aur batao') ||
+    lower.includes('kuch naya batao') ||
     lower === 'why?' ||
     lower === 'how?' ||
     lower === 'and then?' ||
@@ -195,6 +225,9 @@ function detectIntent(
     lower.includes('placement drive') ||
     lower.includes('vacancy') ||
     lower.includes('hire') ||
+    lower.includes('naukri') ||
+    lower.includes('job chahiye') ||
+    lower.includes('internship chahiye') ||
     (lower.includes('pune') && (lower.includes('job') || lower.includes('work')))
   ) {
     return { type: 'INTERNSHIP_QUERY', confidence: 0.85 };
@@ -204,6 +237,8 @@ function detectIntent(
   if (
     lower.includes('what is bms') ||
     lower.includes('bms testing') ||
+    lower.includes('bms kya hai') ||
+    lower.includes('bms kya hota hai') ||
     lower.includes('battery management system') ||
     lower.includes('learn bms')
   ) {
