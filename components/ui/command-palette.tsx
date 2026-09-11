@@ -27,10 +27,6 @@ export function CommandPalette() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsOpen((prev) => !prev);
-      }
       if (e.key === 'Escape') {
         setIsOpen(false);
       }
@@ -188,7 +184,7 @@ export function CommandPalette() {
 
         <div className="px-4 py-2 bg-slate-50 dark:bg-slate-950/50 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
           <span>Navigate with mouse or keyboard</span>
-          <span>Press Ctrl+K anytime</span>
+          <span>Jobzy State Directory</span>
         </div>
       </div>
     </div>

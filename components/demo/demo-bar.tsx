@@ -140,15 +140,6 @@ export function DemoBar() {
                 <Moon className="w-3.5 h-3.5" />
                 <span>Toggle Dark Theme</span>
               </button>
-              <button
-                onClick={() => {
-                  const ev = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true });
-                  window.dispatchEvent(ev);
-                }}
-                className="text-[11px] text-blue-400 hover:underline"
-              >
-                Ctrl+K Menu
-              </button>
             </div>
           </div>
         )}

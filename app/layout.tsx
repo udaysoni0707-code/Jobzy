@@ -1,9 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/components/ui/toast';
-import { CommandPalette } from '@/components/ui/command-palette';
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
+import { AppShell } from '@/components/layout/app-shell';
 import { AuthService } from '@/lib/auth';
 
 export const viewport: Viewport = {
@@ -36,12 +34,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
-      <body className="font-sans min-h-screen w-full overflow-x-hidden flex flex-col bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 antialiased">
+      <body className="font-sans min-h-screen w-full overflow-x-hidden bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 antialiased">
         <ToastProvider>
-          <Navbar currentUser={currentUser} />
-          <main className="flex-1 w-full">{children}</main>
-          <Footer />
-          <CommandPalette />
+          <AppShell currentUser={currentUser}>
+            {children}
+          </AppShell>
         </ToastProvider>
       </body>
     </html>
