@@ -4,7 +4,18 @@ import { AuthService } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, role, district, organizationName, instituteType } = await req.json();
+    const {
+      name,
+      email,
+      password,
+      role,
+      district,
+      organizationName,
+      instituteType,
+      cinOrGstin,
+      education,
+      skills,
+    } = await req.json();
 
     if (!name || !email || !password || !role) {
       return NextResponse.json({ error: 'Name, email, password, and role are required' }, { status: 400 });
@@ -42,7 +53,8 @@ export async function POST(req: NextRequest) {
           create: {
             district: district || 'Pune',
             location: `${district || 'Pune'}, Maharashtra`,
-            headline: role === 'STUDENT' ? 'SkillAlign Learner' : undefined,
+            headline: role === 'STUDENT' ? (education ? `${education} Candidate` : 'SkillAlign Learner') : undefined,
+            education: role === 'STUDENT' && education ? education : undefined,
           },
         },
         organization:
@@ -51,6 +63,7 @@ export async function POST(req: NextRequest) {
                 create: {
                   name: organizationName || `${name}'s Organization`,
                   district: district || 'Pune',
+                  cinOrGstin: cinOrGstin ? cinOrGstin.trim() : undefined,
                   verificationStatus: 'PENDING',
                 },
               }
@@ -69,6 +82,41 @@ export async function POST(req: NextRequest) {
             : undefined,
       },
     });
+
+    // Save student skills if provided
+    if (role === 'STUDENT' && Array.isArray(skills) && skills.length > 0) {
+      for (const skillItem of skills) {
+        const trimmed = typeof skillItem === 'string' ? skillItem.trim() : '';
+        if (!trimmed) continue;
+
+        try {
+          let skillRecord = await db.skill.findFirst({
+            where: { name: { equals: trimmed } },
+          });
+
+          if (!skillRecord) {
+            skillRecord = await db.skill.create({
+              data: {
+                name: trimmed,
+                category: 'Technical & Core Skills',
+                demandIndex: 65,
+              },
+            });
+          }
+
+          await db.studentSkill.create({
+            data: {
+              userId: user.id,
+              skillId: skillRecord.id,
+              proficiency: 'INTERMEDIATE',
+            },
+          });
+        } catch (skillErr) {
+          // Ignore unique constraint or conflict errors silently
+          console.warn('Failed to associate skill during signup:', trimmed, skillErr);
+        }
+      }
+    }
 
     const sessionToken = AuthService.encodeSession({
       id: user.id,

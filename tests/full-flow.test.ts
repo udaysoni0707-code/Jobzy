@@ -84,7 +84,7 @@ async function runTests() {
     });
     assert(!!studentUser, 'Student user (Aarav Deshmukh) exists');
     assert(
-      studentUser?.profile?.targetRole?.title?.includes('EV'),
+      Boolean(studentUser?.profile?.targetRole?.title?.includes('EV')),
       'Student profile linked to target role "EV Technician"'
     );
     assert((studentUser?.roadmaps?.length || 0) > 0, 'Student has learning roadmap attached');

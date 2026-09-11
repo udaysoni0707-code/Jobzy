@@ -60,6 +60,7 @@ model Organization {
   district           String             @default("Pune")
   website            String?
   description        String?
+  cinOrGstin         String?
   verificationStatus String             @default("PENDING") // PENDING, VERIFIED, REJECTED
   userId             String?            @unique
   user               User?              @relation(fields: [userId], references: [id])

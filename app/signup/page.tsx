@@ -9,6 +9,26 @@ import { MAHARASHTRA_DISTRICTS } from '@/lib/taxonomy';
 import { User, Building2, GraduationCap, Landmark, ShieldCheck, Mail, Lock, Sparkles, MapPin } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 
+const DEFAULT_SKILLS = [
+  'Python',
+  'Java',
+  'SQL',
+  'React',
+  'Node.js',
+  'Excel',
+  'Communication',
+  'AutoCAD',
+  'Tally',
+  'Digital Marketing',
+  'Data Analysis',
+  'AWS',
+  'Machine Learning',
+  'HTML/CSS',
+  'JavaScript',
+  'Git',
+  'Linux',
+];
+
 export default function SignupPage() {
   const [role, setRole] = useState<'STUDENT' | 'INDUSTRY' | 'INSTITUTE' | 'GOVERNMENT'>('STUDENT');
   const [name, setName] = useState('');
@@ -17,9 +37,32 @@ export default function SignupPage() {
   const [district, setDistrict] = useState('Pune');
   const [organizationName, setOrganizationName] = useState('');
   const [instituteType, setInstituteType] = useState('POLYTECHNIC');
+  const [cinOrGstin, setCinOrGstin] = useState('');
+  const [education, setEducation] = useState('');
+  const [availableSkills, setAvailableSkills] = useState<string[]>(DEFAULT_SKILLS);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [customSkillInput, setCustomSkillInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const toast = useToast();
+
+  const toggleSkill = (skill: string) => {
+    setSelectedSkills((prev) =>
+      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
+    );
+  };
+
+  const handleAddCustomSkill = () => {
+    const trimmed = customSkillInput.trim();
+    if (!trimmed) return;
+    if (!availableSkills.includes(trimmed)) {
+      setAvailableSkills((prev) => [...prev, trimmed]);
+    }
+    if (!selectedSkills.includes(trimmed)) {
+      setSelectedSkills((prev) => [...prev, trimmed]);
+    }
+    setCustomSkillInput('');
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +80,9 @@ export default function SignupPage() {
           district,
           organizationName,
           instituteType,
+          cinOrGstin: role === 'INDUSTRY' ? cinOrGstin : undefined,
+          education: role === 'STUDENT' ? education : undefined,
+          skills: role === 'STUDENT' ? selectedSkills : undefined,
         }),
       });
 
@@ -161,19 +207,115 @@ export default function SignupPage() {
             />
           </div>
 
+          {role === 'STUDENT' && (
+            <div className="space-y-4 pt-1">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Education / Degree
+                </label>
+                <input
+                  type="text"
+                  value={education}
+                  onChange={(e) => setEducation(e.target.value)}
+                  placeholder="e.g. B.Tech in CSE / B.Com / Diploma in IT"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Select Your Current Skills (Used for Skill Gap Analysis):
+                  </label>
+                  {selectedSkills.length > 0 && (
+                    <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full">
+                      {selectedSkills.length} selected
+                    </span>
+                  )}
+                </div>
+
+                {/* Skill Pills */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {availableSkills.map((skill) => {
+                    const isSelected = selectedSkills.includes(skill);
+                    return (
+                      <button
+                        key={skill}
+                        type="button"
+                        onClick={() => toggleSkill(skill)}
+                        className={`text-xs px-3.5 py-1.5 rounded-full border transition-all flex items-center gap-1.5 cursor-pointer select-none ${
+                          isSelected
+                            ? 'bg-blue-600 border-blue-600 text-white font-semibold shadow-sm'
+                            : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-blue-400 hover:bg-slate-50 dark:hover:bg-slate-700/60'
+                        }`}
+                      >
+                        <span className={isSelected ? 'text-white font-bold' : 'text-slate-400 font-bold'}>
+                          {isSelected ? '✓' : '+'}
+                        </span>
+                        <span>{skill}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Add other skill input + button */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={customSkillInput}
+                    onChange={(e) => setCustomSkillInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomSkill();
+                      }
+                    }}
+                    placeholder="Add other skill (e.g. Docker, Flutter)..."
+                    className="flex-1 px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomSkill}
+                    className="px-4 py-2 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 transition-colors shadow-sm"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {role === 'INDUSTRY' && (
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Company / Organization Name
-              </label>
-              <input
-                type="text"
-                required
-                value={organizationName}
-                onChange={(e) => setOrganizationName(e.target.value)}
-                placeholder="e.g. Tata Motors, Mahindra Electric, Bajaj Auto"
-                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Company / Organization Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={organizationName}
+                  onChange={(e) => setOrganizationName(e.target.value)}
+                  placeholder="e.g. Tata Motors, Mahindra Electric, Bajaj Auto"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Corporate CIN or GSTIN (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={cinOrGstin}
+                  onChange={(e) => setCinOrGstin(e.target.value)}
+                  placeholder="e.g. U72900MH2019PLC323456 / 27AAAAA0000A1Z5"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/60 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                />
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Govt administrators verify corporate credentials to award the verified emblem.
+                </p>
+              </div>
             </div>
           )}
 
