@@ -20,6 +20,7 @@ import { ExtractedSkill } from '@/types';
 
 export default function IndustryDashboard() {
   const toast = useToast();
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [requirements, setRequirements] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,6 +52,12 @@ export default function IndustryDashboard() {
 
   useEffect(() => {
     fetchRequirements();
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.user) setCurrentUser(d.user);
+      })
+      .catch(() => {});
   }, []);
 
   const handleSubmitRequirement = async (e: React.FormEvent) => {
@@ -97,7 +104,7 @@ export default function IndustryDashboard() {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
               <Building2 className="w-4 h-4" />
-              Tata Motors Passenger Vehicles EV Unit • Pune Hub
+              {currentUser?.organization?.name || (currentUser?.role === 'INDUSTRY' ? currentUser.name : 'Tata Motors Passenger Vehicles EV Unit')} • {currentUser?.organization?.district || currentUser?.district || 'Pune'} Hub
             </span>
             <Badge variant="emerald">Verified Industry Partner</Badge>
           </div>

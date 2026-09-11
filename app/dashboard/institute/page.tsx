@@ -22,6 +22,7 @@ import {
 
 export default function InstituteDashboard() {
   const toast = useToast();
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [selectedRec, setSelectedRec] = useState<any | null>(null);
@@ -50,6 +51,12 @@ export default function InstituteDashboard() {
 
   useEffect(() => {
     fetchCurriculumData();
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.user) setCurrentUser(d.user);
+      })
+      .catch(() => {});
   }, []);
 
   const handleApprove = async (recommendationId: string) => {
@@ -117,7 +124,7 @@ export default function InstituteDashboard() {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
               <GraduationCap className="w-4 h-4" />
-              Government Polytechnic Pune • MSBTE Affiliated (Code: MSBTE-6002)
+              {currentUser?.institute?.name || (currentUser?.role === 'INSTITUTE' ? currentUser.name : 'Government Polytechnic Pune')} • MSBTE Affiliated (Code: {currentUser?.institute?.code || 'MSBTE-6002'})
             </span>
             <Badge variant="emerald">State Approved Institute</Badge>
           </div>

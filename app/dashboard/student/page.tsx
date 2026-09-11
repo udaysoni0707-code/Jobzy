@@ -18,25 +18,64 @@ import {
   Users,
 } from 'lucide-react';
 
+import { AuthService } from '@/lib/auth';
+
 export const dynamic = 'force-dynamic';
 
 export default async function StudentDashboard() {
-  const student = await db.user.findFirst({
-    where: { role: 'STUDENT' },
-    include: {
-      profile: {
-        include: { targetRole: true },
-      },
-      studentSkills: {
-        include: { skill: true },
-      },
-      roadmaps: {
-        include: { jobRole: true },
-      },
-    },
-  });
+  const currentUser = await AuthService.getCurrentUser();
 
-  const roadmap = student?.roadmaps[0];
+  // Try to find the specific logged-in student user first
+  let student = currentUser?.id
+    ? await db.user.findUnique({
+        where: { id: currentUser.id },
+        include: {
+          profile: {
+            include: { targetRole: true },
+          },
+          studentSkills: {
+            include: { skill: true },
+          },
+          roadmaps: {
+            include: { jobRole: true },
+          },
+        },
+      })
+    : null;
+
+  // If no user is logged in or user not in DB, fallback to demo student
+  const fallbackStudent = !student
+    ? await db.user.findFirst({
+        where: { role: 'STUDENT' },
+        include: {
+          profile: {
+            include: { targetRole: true },
+          },
+          studentSkills: {
+            include: { skill: true },
+          },
+          roadmaps: {
+            include: { jobRole: true },
+          },
+        },
+      })
+    : null;
+
+  const effectiveName = student?.name || currentUser?.name || fallbackStudent?.name || 'Student';
+  const effectiveDistrict = student?.profile?.district || currentUser?.district || fallbackStudent?.profile?.district || 'Pune';
+  const effectiveEducation = student?.profile?.education || fallbackStudent?.profile?.education || 'Government Polytechnic Pune';
+
+  const targetRoleTitle =
+    student?.profile?.targetRole?.title ||
+    fallbackStudent?.profile?.targetRole?.title ||
+    'EV Technician & Diagnostic Specialist';
+
+  const readinessScore =
+    student?.profile?.readinessScore ||
+    fallbackStudent?.profile?.readinessScore ||
+    68;
+
+  const roadmap = student?.roadmaps?.[0] || fallbackStudent?.roadmaps?.[0];
   let roadmapSteps: any[] = [];
   try {
     if (roadmap?.stepsJson) {
@@ -44,6 +83,56 @@ export default async function StudentDashboard() {
     }
   } catch (e) {
     roadmapSteps = [];
+  }
+
+  if (roadmapSteps.length === 0) {
+    roadmapSteps = [
+      {
+        step: 1,
+        title: 'High Voltage EV Safety Certification (AIS-038/156)',
+        skill: 'EV Safety Protocols',
+        type: 'CERTIFICATION',
+        durationWeeks: 3,
+        completed: true,
+        provider: 'MSBTE / ASDC Certified',
+      },
+      {
+        step: 2,
+        title: 'Electric Powertrain & Inverter Calibration',
+        skill: 'Traction Motor & Inverter Control',
+        type: 'COURSE',
+        durationWeeks: 4,
+        completed: true,
+        provider: 'Government Polytechnic Pune',
+      },
+      {
+        step: 3,
+        title: 'Battery Management Systems (BMS) Architecture & State Estimation',
+        skill: 'Battery Management Systems',
+        type: 'LAB',
+        durationWeeks: 5,
+        completed: false,
+        provider: 'SkillAlign Recommended Lab (In Progress)',
+      },
+      {
+        step: 4,
+        title: 'Battery Health & Electrochemical Impedance Diagnostics',
+        skill: 'Battery Diagnostics',
+        type: 'LAB',
+        durationWeeks: 4,
+        completed: false,
+        provider: 'Industrial Workshop Partner (Tata Motors Hub)',
+      },
+      {
+        step: 5,
+        title: 'Commercial Fast Charging (CCS2/OCPP) Capstone Project',
+        skill: 'Charging Infrastructure',
+        type: 'PROJECT',
+        durationWeeks: 3,
+        completed: false,
+        provider: 'Industry Capstone',
+      },
+    ];
   }
 
   const evOpportunities = await db.industryRequirement.findMany({
@@ -59,16 +148,16 @@ export default async function StudentDashboard() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs font-semibold bg-blue-500/30 text-blue-200 border border-blue-400/30 px-2.5 py-0.5 rounded-full">
-              Verified Student • Government Polytechnic Pune
+              Verified Student • {effectiveEducation}
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-            Welcome back, {student?.name || 'Aarav Deshmukh'}!
+            Welcome back, {effectiveName}!
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
             Target Career:{' '}
             <strong className="text-white">
-              {student?.profile?.targetRole?.title || 'EV Technician & Diagnostic Specialist'}
+              {targetRoleTitle}
             </strong>
           </p>
         </div>
@@ -78,11 +167,11 @@ export default async function StudentDashboard() {
           <div>
             <span className="text-xs text-slate-300 block">Job-Role Readiness</span>
             <span className="text-3xl font-black text-white">
-              {student?.profile?.readinessScore || 68}%
+              {readinessScore}%
             </span>
           </div>
           <div className="w-16 h-16 rounded-full border-4 border-emerald-400 flex items-center justify-center font-bold text-sm text-emerald-300">
-            {student?.profile?.readinessScore || 68}%
+            {readinessScore}%
           </div>
         </div>
       </div>
