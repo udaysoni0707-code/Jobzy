@@ -25,42 +25,24 @@ export default function ConnectionsPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchConnections = async () => {
+    setIsLoading(true);
     try {
       const res = await fetch('/api/connections');
       const data = await res.json();
       if (data.connections) setConnections(data.connections);
       if (data.pendingRequests) setPending(data.pendingRequests);
+      if (data.discoverable && data.discoverable.length > 0) {
+        setDiscoverable(data.discoverable);
+      }
     } catch (e) {
       console.error(e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchConnections();
-    // Suggested peers to discover
-    setDiscoverable([
-      {
-        id: 'cmtvllhl4003pjcwffrj9rk79',
-        name: 'Priya Sharma',
-        role: 'STUDENT',
-        headline: 'Mechatronics Researcher • Mumbai',
-        mutuals: 3,
-      },
-      {
-        id: 'cmtvllhl4003pjcwffrj9rk80',
-        name: 'Siddharth More',
-        role: 'STUDENT',
-        headline: 'EV Powertrain Enthusiast • Pune',
-        mutuals: 1,
-      },
-      {
-        id: 'cmtvllhl4003pjcwffrj9rk81',
-        name: 'Prof. Anjali Kulkarni',
-        role: 'INSTITUTE',
-        headline: 'HOD Automobile Engg • GP Pune',
-        mutuals: 5,
-      },
-    ]);
   }, []);
 
   const handleAction = async (action: 'ACCEPT' | 'REJECT', connectionId: string) => {
