@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { NLPEngine } from '../lib/nlp-engine';
 import { AuthService } from '../lib/auth';
+import { generateLocalContextualAIResponse } from '../lib/ai-assistant';
 
 const prisma = new PrismaClient();
 
@@ -111,6 +112,118 @@ async function runTests() {
 
     const districtMetricsCount = await prisma.districtDemandMetric.count();
     assert(districtMetricsCount >= 5, 'District demand telemetry metrics populated in database');
+
+    // ----------------------------------------------------
+    // TEST 5: Context-Aware Multi-Turn AI Messaging
+    // ----------------------------------------------------
+    console.log('\n🔹 Test Suite 5: Context-Aware Multi-Turn AI Messaging');
+
+    const priyaPersona = {
+      name: 'Priya Sharma',
+      role: 'STUDENT' as const,
+      headline: 'Mechatronics & EV Research • GP Pune',
+      organization: 'Government Polytechnic Pune',
+    };
+
+    // Test 5.1: Background inquiry directly answers with diploma, Mechatronics, GP Pune
+    const bgReply = generateLocalContextualAIResponse({
+      currentUser: { id: 'u1', name: 'Raman', district: 'Pune' },
+      stakeholder: priyaPersona,
+      conversationHistory: [
+        {
+          senderId: 'u2',
+          role: 'assistant',
+          content: "I'd be happy to introduce myself! I'm Priya Sharma... What would you like to know about my background or research?",
+        },
+      ],
+      latestMessage: 'what is your background',
+    });
+    assert(
+      bgReply.includes('Mechatronics') && (bgReply.includes('Government Polytechnic Pune') || bgReply.includes('GP Pune')),
+      'Answers "what is your background" directly with Mechatronics & GP Pune details'
+    );
+    assert(
+      !bgReply.includes("That's a thoughtful point! As fellow learners"),
+      'Does NOT fall back to generic conversational evasion on background query'
+    );
+
+    // Test 5.2: Research inquiry answers with BMS, cell balancing, MATLAB, AIS-038
+    const researchReply = generateLocalContextualAIResponse({
+      currentUser: { id: 'u1', name: 'Raman', district: 'Pune' },
+      stakeholder: priyaPersona,
+      conversationHistory: [],
+      latestMessage: 'tell me about your research',
+    });
+    assert(
+      researchReply.includes('Battery Management Systems') && researchReply.includes('Cell-Balancing'),
+      'Answers "tell me about your research" with Battery Management Systems & Cell-Balancing'
+    );
+
+    // Test 5.3: Follow-up answering Priya\'s "What would you like to know about my background or research?" with "both"
+    const bothReply = generateLocalContextualAIResponse({
+      currentUser: { id: 'u1', name: 'Raman', district: 'Pune' },
+      stakeholder: priyaPersona,
+      conversationHistory: [
+        {
+          senderId: 'u2',
+          role: 'assistant',
+          content: 'What would you like to know about my background or research?',
+        },
+      ],
+      latestMessage: 'both',
+    });
+    assert(
+      bothReply.includes('Academic Background') && bothReply.includes('Research Focus'),
+      'Understands "both" in context of previous question and provides background & research'
+    );
+
+    // Test 5.4: College inquiry
+    const collegeReply = generateLocalContextualAIResponse({
+      currentUser: { id: 'u1', name: 'Raman', district: 'Pune' },
+      stakeholder: priyaPersona,
+      conversationHistory: [],
+      latestMessage: 'which college do you study at?',
+    });
+    assert(
+      collegeReply.includes('Government Polytechnic Pune') && collegeReply.includes('Shivaji Nagar'),
+      'Answers "which college" with Government Polytechnic Pune & Shivaji Nagar'
+    );
+
+    // Test 5.5: Projects inquiry
+    const projReply = generateLocalContextualAIResponse({
+      currentUser: { id: 'u1', name: 'Raman', district: 'Pune' },
+      stakeholder: priyaPersona,
+      conversationHistory: [],
+      latestMessage: 'what projects have you worked on?',
+    });
+    assert(
+      projReply.includes('Smart BMS Prototype') || projReply.includes('48V BMS Prototype'),
+      'Answers "what projects have you worked on" with Smart BMS Prototype details'
+    );
+
+    // Test 5.6: Tata Motors Industry Career acceptance
+    const tataPersona = {
+      name: 'Tata Motors EV Systems',
+      role: 'INDUSTRY' as const,
+      headline: 'Technical Talent & Apprenticeship Division • Pune Hub',
+      organization: 'Tata Motors',
+    };
+    const tataReply = generateLocalContextualAIResponse({
+      currentUser: { id: 'u1', name: 'Raman', district: 'Pune' },
+      stakeholder: tataPersona,
+      conversationHistory: [
+        {
+          senderId: 'u3',
+          role: 'assistant',
+          content: 'Are you looking to explore career pathways with us?',
+        },
+      ],
+      latestMessage: 'yes',
+    });
+    assert(
+      tataReply.includes('Tata Motors EV Systems Pune') && tataReply.includes('Apprentice Trainees'),
+      'Understands "yes" to career pathways and provides Tata Motors apprentice role details'
+    );
 
     // ----------------------------------------------------
     // SUMMARY
