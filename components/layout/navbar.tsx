@@ -5,21 +5,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
-  Sparkles,
   Command,
   Sun,
   Moon,
   Menu,
-  X,
-  User,
   LogOut,
-  Bell,
-  MessageSquare,
-  Users,
-  Shield,
-  ChevronDown,
+  PanelLeft,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
+import { Sidebar } from './sidebar';
 
 interface NavbarProps {
   currentUser?: {
@@ -31,7 +25,7 @@ interface NavbarProps {
 }
 
 export function Navbar({ currentUser }: NavbarProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [notificationsCount, setNotificationsCount] = useState(3);
   const router = useRouter();
@@ -39,6 +33,17 @@ export function Navbar({ currentUser }: NavbarProps) {
 
   useEffect(() => {
     setIsDarkMode(document.documentElement.classList.contains('dark'));
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        setIsSidebarOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const toggleDarkMode = () => {
@@ -69,8 +74,17 @@ export function Navbar({ currentUser }: NavbarProps) {
   return (
     <header className="sticky top-0 z-30 w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md transition-colors">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
-        {/* Brand Logo */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Brand Logo & Sidebar Toggle */}
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 -ml-1 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer group"
+            aria-label="Open Sidebar Navigation"
+            title="Open navigation menu (Ctrl+B)"
+          >
+            <PanelLeft className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+          </button>
+
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-900 dark:bg-blue-600 text-white flex items-center justify-center font-black text-base sm:text-lg shadow-sm group-hover:scale-105 transition-transform shrink-0">
               <span className="text-white">JZ</span>
@@ -167,46 +181,23 @@ export function Navbar({ currentUser }: NavbarProps) {
             </div>
           )}
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Sidebar Toggle */}
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onClick={() => setIsSidebarOpen(true)}
             className="md:hidden p-2 text-slate-600 hover:text-slate-900 dark:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Toggle Navigation Menu"
           >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <Menu className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 space-y-2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="block px-3 py-2 text-sm font-medium text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-            >
-              {link.label}
-            </Link>
-          ))}
-          {!currentUser && (
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-              <Link href="/login" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="outline" size="sm" className="w-full">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/signup" className="flex-1" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="primary" size="sm" className="w-full">
-                  Get Started
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Sidebar Navigation Drawer */}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        currentUser={currentUser}
+      />
     </header>
   );
 }
