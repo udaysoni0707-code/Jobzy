@@ -31,12 +31,12 @@ export default function LandingPage() {
 
   const faqs = [
     {
-      q: 'How does SkillAlign differ from standard job or course portals?',
-      a: 'SkillAlign is an intelligence platform, not a classifieds board. It ingests industrial hiring signals, extracts standardized competencies through NLP, maps them against institutional curricula (MSBTE/ITI/Universities), computes granular skill gaps, and issues explainable recommendations to revise training programs.',
+      q: 'How does Jobzy differ from standard job or course portals?',
+      a: 'Jobzy is an intelligence platform, not a classifieds board. It ingests industrial hiring signals, extracts standardized competencies through NLP, maps them against institutional curricula (MSBTE/ITI/Universities), computes granular skill gaps, and issues explainable recommendations to revise training programs.',
     },
     {
       q: 'Does the AI automatically overwrite official curricula?',
-      a: 'No. In alignment with AI Safety principles, SkillAlign provides transparent, explainable recommendations backed by empirical data signals. Curriculum decisions remain entirely under the authority of MSBTE, DTE, and certified institutional committees.',
+      a: 'No. In alignment with AI Safety principles, Jobzy provides transparent, explainable recommendations backed by empirical data signals. Curriculum decisions remain entirely under the authority of MSBTE, DTE, and certified institutional committees.',
     },
     {
       q: 'How is the EV Technician scenario evaluated?',
@@ -65,7 +65,7 @@ export default function LandingPage() {
         </h1>
 
         <p className="mt-4 sm:mt-6 text-sm sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          SkillAlign uses industry signals, skill intelligence, and curriculum analysis to identify emerging skill gaps and convert them into actionable training and career recommendations across Maharashtra.
+          Jobzy uses industry signals, skill intelligence, and curriculum analysis to identify emerging skill gaps and convert them into actionable training and career recommendations across Maharashtra.
         </p>
 
         {/* Hero CTAs */}
@@ -132,7 +132,7 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60">
-              <span className="text-emerald-400 font-bold text-lg block mb-1">SkillAlign Solution</span>
+              <span className="text-emerald-400 font-bold text-lg block mb-1">Jobzy Solution</span>
               <p className="text-xs text-slate-300">
                 Continuous automated feedback loop converting live OEM requirements into validated curriculum recommendations and student roadmaps.
               </p>
@@ -225,7 +225,7 @@ export default function LandingPage() {
             Tailored Desks for Every Decision Maker
           </h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            Select a role to preview how SkillAlign equips each stakeholder with dedicated intelligence:
+            Select a role to preview how Jobzy equips each stakeholder with dedicated intelligence:
           </p>
         </div>
 

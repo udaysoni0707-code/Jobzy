@@ -8,7 +8,7 @@ if (!process.env.DATABASE_URL) {
 }
 
 console.log('--------------------------------------------------');
-console.log('🚀 SkillAlign / Jobzy Production Build');
+console.log('🚀 Jobzy Production Build');
 console.log(`📦 DATABASE_URL: ${process.env.DATABASE_URL}`);
 console.log(`📦 NODE_ENV: ${process.env.NODE_ENV || 'production'}`);
 console.log('--------------------------------------------------');
@@ -45,7 +45,7 @@ try {
   // 4. Next.js Production Build
   run('npx next build', 'Compiling Next.js Application');
 
-  console.log('\n✅ SkillAlign production build completed successfully!\n');
+  console.log('\n✅ Jobzy production build completed successfully!\n');
 } catch (error) {
   console.error('\n💥 Build pipeline failed:', error.message || error);
   process.exit(1);

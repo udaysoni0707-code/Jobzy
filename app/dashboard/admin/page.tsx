@@ -35,7 +35,7 @@ export default async function AdminDashboard() {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-blue-600" />
-              SkillAlign Governance & System Administration Desk
+              Jobzy Governance & System Administration Desk
             </span>
             <Badge variant="blue">Master Admin</Badge>
           </div>

@@ -63,7 +63,7 @@ export default function LoginPage() {
             </div>
 
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-              SkillAlign
+              Jobzy
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-slate-300 leading-relaxed">
               Industry–Skill Intelligence & Curriculum Alignment Platform for the Government of Maharashtra.

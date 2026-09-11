@@ -61,7 +61,7 @@ export default function SignupPage() {
       <div className="w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-8 sm:p-10">
         <div className="text-center mb-8">
           <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-            Join the SkillAlign Ecosystem
+            Join the Jobzy Ecosystem
           </span>
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">
             Create an Account

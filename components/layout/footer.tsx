@@ -8,9 +8,9 @@ export function Footer() {
         <div className="space-y-3 md:col-span-2">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
-              SA
+              JZ
             </div>
-            <span className="text-lg font-bold text-slate-900 dark:text-slate-100">SKILLALIGN</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-slate-100">JOBZY</span>
           </div>
           <p className="text-xs text-slate-500 max-w-md leading-relaxed">
             From Industry Demand to Future-Ready Skills. Developed for Smart India Hackathon 2026 (Problem Statement SIH26134) under the auspices of the Government of Maharashtra.
@@ -79,7 +79,7 @@ export function Footer() {
 
       <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-400">
         <div>
-          © 2026 SkillAlign • Built for SIH 2026 • Government of Maharashtra
+          © 2026 Jobzy • Built for SIH 2026 • Government of Maharashtra
         </div>
         <div className="italic">
           * Prototype visualization — synthetic demo data. Demonstrates proposed system architecture.
