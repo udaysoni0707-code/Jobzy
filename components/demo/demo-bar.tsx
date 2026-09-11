@@ -104,7 +104,6 @@ export function DemoBar() {
                 <Zap className="w-3.5 h-3.5 text-amber-400" />
                 SIH 2026 Judge Controller
               </span>
-              <span className="text-[10px] bg-blue-600 px-1.5 py-0.5 rounded font-mono">SIH26134</span>
             </div>
 
             <p className="text-[11px] text-slate-400">

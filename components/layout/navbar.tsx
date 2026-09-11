@@ -80,9 +80,6 @@ export function Navbar({ currentUser }: NavbarProps) {
                 <span className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-slate-100 tracking-tight">
                   JOBZY
                 </span>
-                <span className="hidden sm:inline-flex text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-1.5 py-0.2 rounded border border-blue-200 dark:border-blue-900">
-                  SIH26134
-                </span>
               </div>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 -mt-0.5 hidden sm:block">
                 Govt. of Maharashtra Initiative

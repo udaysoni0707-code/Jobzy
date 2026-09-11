@@ -45,9 +45,6 @@ export default async function GovernmentDashboard() {
               <Landmark className="w-4 h-4 text-blue-600" />
               Directorate of Technical Education (DTE) • Government of Maharashtra
             </span>
-            <span className="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded font-mono">
-              SIH26134
-            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Statewide Skill Intelligence & Curriculum Alignment Desk

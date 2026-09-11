@@ -13,7 +13,7 @@ export function Footer() {
             <span className="text-lg font-bold text-slate-900 dark:text-slate-100">JOBZY</span>
           </div>
           <p className="text-xs text-slate-500 max-w-md leading-relaxed">
-            From Industry Demand to Future-Ready Skills. Developed for Smart India Hackathon 2026 (Problem Statement SIH26134) under the auspices of the Government of Maharashtra.
+            From Industry Demand to Future-Ready Skills. Developed for Smart India Hackathon 2026 under the auspices of the Government of Maharashtra.
           </p>
           <div className="text-[11px] text-slate-400">
             Continuous feedback loop between industrial demand signals, AI skill extraction, curriculum alignment, and student readiness.

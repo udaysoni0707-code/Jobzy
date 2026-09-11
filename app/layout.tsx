@@ -16,11 +16,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'Jobzy — Industry–Skill Intelligence & Curriculum Alignment Platform',
   description:
-    'Smart India Hackathon 2026 (SIH26134) - Government of Maharashtra. Continuous feedback loop between industry demand signals, AI skill extraction, curriculum alignment, and student readiness.',
+    'Smart India Hackathon 2026 - Government of Maharashtra. Continuous feedback loop between industry demand signals, AI skill extraction, curriculum alignment, and student readiness.',
   keywords: [
     'Jobzy',
     'SkillAlign',
-    'SIH26134',
     'Smart India Hackathon',
     'Maharashtra Skill Development',
     'Curriculum Alignment',
