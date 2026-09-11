@@ -1,10 +1,10 @@
 services:
   - type: web
-    name: skillalign
+    name: Jobzy
     runtime: node
     plan: free
     region: singapore
-    buildCommand: npm install && npx prisma db push && npx tsx prisma/seed.ts && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm run start
     envVars:
       - key: NODE_ENV

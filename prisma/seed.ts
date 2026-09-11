@@ -2,7 +2,13 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { MAHARASHTRA_SKILL_TAXONOMY, MAHARASHTRA_DISTRICTS } from '../lib/taxonomy';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL || 'file:./dev.db',
+    },
+  },
+});
 
 async function main() {
   console.log('🌱 Seeding SkillAlign database for SIH26134 (Government of Maharashtra)...');

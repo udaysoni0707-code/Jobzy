@@ -21,9 +21,10 @@
 .env*.local
 .env
 
-# Prisma SQLite file
-/prisma/*.db
+# Prisma SQLite file (tracking dev.db for instant zero-config cloud deployments)
 /prisma/*.db-journal
+/prisma/*.db
+!/prisma/dev.db
 
 # Logs
 npm-debug.log*

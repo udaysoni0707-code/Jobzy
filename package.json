@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push && tsx prisma/seed.ts && next build",
+    "build": "node scripts/build.js",
     "start": "next start -H 0.0.0.0",
     "lint": "next lint",
+    "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "test": "tsx tests/full-flow.test.ts"
@@ -19,10 +20,13 @@
     "framer-motion": "^11.5.4",
     "lucide-react": "^0.441.0",
     "next": "14.2.14",
+    "prisma": "^5.20.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.12.7",
-    "tailwind-merge": "^2.5.2"
+    "tailwind-merge": "^2.5.2",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -32,9 +36,6 @@
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
-    "prisma": "^5.20.0",
-    "tailwindcss": "^3.4.12",
-    "tsx": "^4.19.1",
-    "typescript": "^5.6.2"
+    "tailwindcss": "^3.4.12"
   }
 }
