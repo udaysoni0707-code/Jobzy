@@ -3,87 +3,119 @@ import Link from 'next/link';
 
 export function Footer() {
   return (
-    <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="space-y-3 md:col-span-2">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+    <footer className="border-t border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 py-12 px-4 sm:px-6 lg:px-8 transition-colors">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+        {/* Column 1: Brand & Initiative */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-slate-900 dark:bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
               JZ
             </div>
-            <span className="text-lg font-bold text-slate-900 dark:text-slate-100">JOBZY</span>
+            <div>
+              <span className="text-base font-extrabold text-slate-900 dark:text-slate-100 block leading-tight">
+                JOBZY
+              </span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block">
+                Govt. of Maharashtra Initiative
+              </span>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 max-w-md leading-relaxed">
-            From Industry Demand to Future-Ready Skills. Developed under the auspices of the Government of Maharashtra.
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm">
+            Continuous skill intelligence platform bridging technical education, vocational curricula, and live industrial hiring demand across 36 districts of Maharashtra.
           </p>
-          <div className="text-[11px] text-slate-400">
-            Continuous feedback loop between industrial demand signals, AI skill extraction, curriculum alignment, and student readiness.
-          </div>
         </div>
 
+        {/* Column 2: Platform */}
         <div>
-          <h4 className="text-xs font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-3">
-            Stakeholder Desks
+          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-3">
+            Platform
           </h4>
           <ul className="space-y-2 text-xs">
             <li>
               <Link href="/dashboard/government" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                Government of Maharashtra Portal
+                Government Desk
               </Link>
             </li>
             <li>
               <Link href="/dashboard/industry" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                Industry & Employers Desk
+                Industry Hub
               </Link>
             </li>
             <li>
-              <Link href="/dashboard/institute" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                Vocational Institutes & MSBTE
+              <Link href="/curriculum" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                Curriculum Desk
               </Link>
             </li>
             <li>
-              <Link href="/dashboard/student" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                Student & Learner Roadmap
+              <Link href="/district-intelligence" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                District Intelligence
               </Link>
             </li>
           </ul>
         </div>
 
+        {/* Column 3: Stakeholders */}
         <div>
-          <h4 className="text-xs font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-3">
-            Platform & Governance
+          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-3">
+            Stakeholders
           </h4>
           <ul className="space-y-2 text-xs">
             <li>
-              <Link href="/district-intelligence" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                36-District Skill Heatmap
+              <Link href="/dashboard/government" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                Government & DTE
               </Link>
             </li>
             <li>
-              <Link href="/curriculum" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                Curriculum Recommendation Engine
+              <Link href="/dashboard/industry" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                Industry Employers
+              </Link>
+            </li>
+            <li>
+              <Link href="/dashboard/institute" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                Vocational Institutions
+              </Link>
+            </li>
+            <li>
+              <Link href="/dashboard/student" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                Learners & Students
+              </Link>
+            </li>
+          </ul>
+        </div>
+
+        {/* Column 4: Platform & Support */}
+        <div>
+          <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-3">
+            Platform & Support
+          </h4>
+          <ul className="space-y-2 text-xs">
+            <li>
+              <Link href="/" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                About Jobzy
               </Link>
             </li>
             <li>
               <Link href="/connections" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                State Skill Network
+                Contact & Support
               </Link>
             </li>
             <li>
-              <Link href="/dashboard/admin" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                System Audit & Verification
+              <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                Terms of Governance
               </Link>
             </li>
           </ul>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-400">
-        <div>
-          © 2026 Jobzy • Government of Maharashtra
-        </div>
-        <div className="italic">
-          * Prototype visualization — synthetic demo data. Demonstrates proposed system architecture.
-        </div>
+      <div className="max-w-7xl mx-auto pt-6 border-t border-slate-200/80 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 dark:text-slate-500">
+        <p>© 2026 JOBZY — Govt. of Maharashtra Initiative</p>
+        <p className="text-[11px]">Empowering State TVET, MSBTE & Industrial Clusters</p>
       </div>
     </footer>
   );
