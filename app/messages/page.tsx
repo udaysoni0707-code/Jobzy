@@ -458,7 +458,7 @@ function MessagesPageContent() {
                   variant="primary"
                   size="md"
                   isLoading={isSending}
-                  disabled={!inputText.trim()}
+                  disabled={!inputText.trim() || isSending || isPeerTyping}
                   className="gap-2 h-10 px-4 text-xs font-bold rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500 text-white cursor-pointer shadow-xs shrink-0"
                 >
                   <Send className="w-3.5 h-3.5" />
