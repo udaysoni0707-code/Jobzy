@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ToastProvider } from '@/components/ui/toast';
 import { CommandPalette } from '@/components/ui/command-palette';
-import { DemoBar } from '@/components/demo/demo-bar';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { AuthService } from '@/lib/auth';
@@ -43,7 +42,6 @@ export default async function RootLayout({
           <main className="flex-1 w-full">{children}</main>
           <Footer />
           <CommandPalette />
-          <DemoBar />
         </ToastProvider>
       </body>
     </html>
