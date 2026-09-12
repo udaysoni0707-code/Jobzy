@@ -682,7 +682,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      setShowCustomGoogleInput(false);
+                      setIsEditingPersonalAccount(!savedPersonalAccount);
                       setIsGoogleModalOpen(true);
                     }}
                     disabled={isLoading}
@@ -918,7 +918,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      setShowCustomGoogleInput(false);
+                      setIsEditingPersonalAccount(!savedPersonalAccount);
                       setIsGoogleModalOpen(true);
                     }}
                     disabled={isLoading}
