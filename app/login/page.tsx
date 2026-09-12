@@ -91,11 +91,32 @@ const GOOGLE_ACCOUNTS = [
   },
 ];
 
+function getOAuthErrorMessage(errorCode: string | null): string | null {
+  if (!errorCode) return null;
+  if (errorCode === 'google_not_configured') {
+    return 'Google OAuth credentials (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET) are not configured in .env yet. You can configure them or use the Developer / Judge Account simulator.';
+  }
+  if (errorCode === 'cancelled') {
+    return 'Google sign-in was cancelled.';
+  }
+  if (errorCode === 'state_mismatch' || errorCode === 'state_expired') {
+    return 'Google security verification timed out. Please try signing in again.';
+  }
+  if (errorCode === 'unverified_email') {
+    return 'Your Google account email is not verified by Google.';
+  }
+  if (errorCode === 'duplicate_account') {
+    return 'An account with this email already exists under email and password.';
+  }
+  return 'Google authentication could not be completed. Please try again.';
+}
+
 function AuthFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialRedirect = searchParams.get('redirect') || '';
   const initialMode = searchParams.get('mode') === 'signup' ? 'signup' : 'signin';
+  const oauthError = searchParams.get('error');
 
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState('');
@@ -110,7 +131,8 @@ function AuthFormContent() {
 
   // States
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isGoogleRedirecting, setIsGoogleRedirecting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(() => getOAuthErrorMessage(oauthError));
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [forgotSuccess, setForgotSuccess] = useState(false);
 
@@ -145,6 +167,13 @@ function AuthFormContent() {
   const [personalDistrict, setPersonalDistrict] = useState('Pune');
   const [googleLoadingUser, setGoogleLoadingUser] = useState<string | null>(null);
 
+  // Listen for OAuth URL error parameters
+  useEffect(() => {
+    if (oauthError) {
+      setErrorMessage(getOAuthErrorMessage(oauthError));
+    }
+  }, [oauthError]);
+
   // Load saved personal Google account from localStorage
   useEffect(() => {
     try {
@@ -165,12 +194,32 @@ function AuthFormContent() {
     setIsEditingPersonalAccount(true);
   }, []);
 
-  // Reset errors when mode changes
+  // Reset errors ONLY when mode actually changes (safe in React 18 StrictMode)
+  const prevModeRef = React.useRef(mode);
   useEffect(() => {
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    setForgotSuccess(false);
+    if (prevModeRef.current !== mode) {
+      prevModeRef.current = mode;
+      setErrorMessage(null);
+      setSuccessMessage(null);
+      setForgotSuccess(false);
+    }
   }, [mode]);
+
+  // Initiate Production Backend Google OAuth 2.0 Flow
+  const handleContinueWithGoogle = () => {
+    setIsGoogleRedirecting(true);
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    const params = new URLSearchParams();
+    if (initialRedirect) params.set('redirect', initialRedirect);
+    if (mode === 'signup') {
+      params.set('role', role);
+      params.set('district', district);
+    }
+    const queryStr = params.toString() ? `?${params.toString()}` : '';
+    window.location.href = `/api/auth/google${queryStr}`;
+  };
 
   // Google OAuth Handler
   const handleGoogleAuth = async (
@@ -552,10 +601,21 @@ function AuthFormContent() {
               initial={{ opacity: 0, y: -6, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -6, scale: 0.98 }}
-              className="mt-4 p-3 rounded-xl bg-red-500/20 border border-red-400/50 flex items-start gap-2.5 text-xs text-red-100 backdrop-blur-md"
+              className="mt-4 p-3 rounded-xl bg-red-500/20 border border-red-400/50 flex flex-col gap-1.5 text-xs text-red-100 backdrop-blur-md"
             >
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-300" />
-              <span className="leading-relaxed font-medium">{errorMessage}</span>
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-300" />
+                <span className="leading-relaxed font-medium">{errorMessage}</span>
+              </div>
+              {errorMessage.includes('Google OAuth credentials') && (
+                <button
+                  type="button"
+                  onClick={() => setIsGoogleModalOpen(true)}
+                  className="ml-6 text-[11px] font-semibold text-blue-300 hover:text-blue-100 underline text-left cursor-pointer"
+                >
+                  Click here to launch the Simulator / Judge Accounts modal &rarr;
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -689,18 +749,24 @@ function AuthFormContent() {
                 )}
               </button>
 
-              {/* Google Sign In Button */}
+              {/* Continue with Google Button */}
               <button
                 type="button"
-                onClick={() => {
-                  setIsEditingPersonalAccount(!savedPersonalAccount);
-                  setIsGoogleModalOpen(true);
-                }}
-                disabled={isLoading}
-                className="w-full h-[50px] rounded-[14px] text-xs sm:text-sm font-semibold bg-white/[0.09] hover:bg-white/[0.16] border border-white/25 text-white shadow-sm transition-all flex items-center justify-center gap-2.5 group"
+                onClick={handleContinueWithGoogle}
+                disabled={isLoading || isGoogleRedirecting}
+                className="w-full h-[50px] sm:h-[52px] rounded-[14px] text-xs sm:text-sm font-semibold bg-white/[0.09] hover:bg-white/[0.16] active:scale-[0.99] border border-white/25 text-white shadow-sm transition-all flex items-center justify-center gap-2.5 group disabled:opacity-60 disabled:pointer-events-none"
               >
-                <GoogleIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
-                <span>Sign in with Google</span>
+                {isGoogleRedirecting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Connecting to Google...</span>
+                  </>
+                ) : (
+                  <>
+                    <GoogleIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+                    <span>Continue with Google</span>
+                  </>
+                )}
               </button>
             </form>
 
@@ -897,18 +963,24 @@ function AuthFormContent() {
                 )}
               </button>
 
-              {/* Google Sign Up Button */}
+              {/* Continue with Google Button */}
               <button
                 type="button"
-                onClick={() => {
-                  setIsEditingPersonalAccount(!savedPersonalAccount);
-                  setIsGoogleModalOpen(true);
-                }}
-                disabled={isLoading}
-                className="w-full h-[48px] rounded-[14px] text-xs sm:text-sm font-semibold bg-white/[0.09] hover:bg-white/[0.16] border border-white/25 text-white shadow-sm transition-all flex items-center justify-center gap-2.5 group"
+                onClick={handleContinueWithGoogle}
+                disabled={isLoading || isGoogleRedirecting}
+                className="w-full h-[50px] sm:h-[52px] rounded-[14px] text-xs sm:text-sm font-semibold bg-white/[0.09] hover:bg-white/[0.16] active:scale-[0.99] border border-white/25 text-white shadow-sm transition-all flex items-center justify-center gap-2.5 group disabled:opacity-60 disabled:pointer-events-none mt-2"
               >
-                <GoogleIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
-                <span>Sign up with Google</span>
+                {isGoogleRedirecting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>Connecting to Google...</span>
+                  </>
+                ) : (
+                  <>
+                    <GoogleIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+                    <span>Continue with Google</span>
+                  </>
+                )}
               </button>
             </form>
           </motion.div>
@@ -1030,6 +1102,18 @@ function AuthFormContent() {
               </button>
             </p>
           )}
+
+          {/* Fallback Simulator / Judge Access Link */}
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setIsGoogleModalOpen(true)}
+              className="text-[11px] text-slate-400 hover:text-blue-300 transition-colors inline-flex items-center gap-1 cursor-pointer"
+            >
+              <span>Offline / Judge testing?</span>
+              <span className="underline">Launch Google Account Simulator</span>
+            </button>
+          </div>
         </div>
       </motion.div>
 

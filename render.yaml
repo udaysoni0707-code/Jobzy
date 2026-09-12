@@ -23,3 +23,9 @@ services:
         value: Maharashtra
       - key: NEXT_PUBLIC_ORG
         value: Government of Maharashtra
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false

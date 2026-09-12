@@ -11,7 +11,8 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   name          String
-  passwordHash  String
+  passwordHash  String?
+  googleId      String?   @unique
   role          String    @default("STUDENT") // STUDENT, INDUSTRY, INSTITUTE, GOVERNMENT, ADMIN
   avatarUrl     String?
   phone         String?
