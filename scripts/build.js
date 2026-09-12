@@ -42,7 +42,13 @@ try {
   // 3. Seed Database (idempotent / resets cleanly)
   run('npx tsx prisma/seed.ts', 'Seeding Initial Database Records');
 
-  // 4. Next.js Production Build
+  // 4. Next.js Production Build (clean cache first)
+  const nextDir = path.join(projectRoot, '.next');
+  if (fs.existsSync(nextDir)) {
+    try {
+      fs.rmSync(nextDir, { recursive: true, force: true });
+    } catch {}
+  }
   run('npx next build', 'Compiling Next.js Application');
 
   console.log('\n✅ Jobzy production build completed successfully!\n');
