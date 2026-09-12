@@ -116,10 +116,39 @@ export default function LoginPage() {
 
   // Google Auth States
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const [googleModalTab, setGoogleModalTab] = useState<'personal' | 'demo'>('personal');
+  const [savedPersonalAccount, setSavedPersonalAccount] = useState<{
+    name: string;
+    email: string;
+    role: UserRole;
+    district: string;
+  } | null>(null);
+  const [isEditingPersonalAccount, setIsEditingPersonalAccount] = useState(false);
   const [customGoogleEmail, setCustomGoogleEmail] = useState('');
   const [customGoogleName, setCustomGoogleName] = useState('');
-  const [showCustomGoogleInput, setShowCustomGoogleInput] = useState(false);
+  const [personalRole, setPersonalRole] = useState<UserRole>('STUDENT');
+  const [personalDistrict, setPersonalDistrict] = useState('Pune');
   const [googleLoadingUser, setGoogleLoadingUser] = useState<string | null>(null);
+
+  // Load saved personal Google account from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('jobzy_personal_google');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.email) {
+          setSavedPersonalAccount(parsed);
+          setCustomGoogleEmail(parsed.email);
+          setCustomGoogleName(parsed.name || '');
+          if (parsed.role) setPersonalRole(parsed.role);
+          if (parsed.district) setPersonalDistrict(parsed.district);
+          setIsEditingPersonalAccount(false);
+          return;
+        }
+      }
+    } catch (e) {}
+    setIsEditingPersonalAccount(true);
+  }, []);
 
   // Reset errors when mode changes
   useEffect(() => {
@@ -133,7 +162,8 @@ export default function LoginPage() {
     googleEmail: string,
     googleName: string,
     avatarUrl?: string,
-    targetRole?: UserRole
+    targetRole?: UserRole,
+    targetDistrict?: string
   ) => {
     setErrorMessage(null);
     setGoogleLoadingUser(googleEmail);
@@ -147,8 +177,8 @@ export default function LoginPage() {
           email: googleEmail.trim(),
           name: googleName.trim(),
           avatarUrl,
-          role: targetRole || (mode === 'signup' ? role : undefined),
-          district: district || 'Pune',
+          role: targetRole || (mode === 'signup' ? role : personalRole || 'STUDENT'),
+          district: targetDistrict || (mode === 'signup' ? district : personalDistrict || 'Pune'),
         }),
       });
 
@@ -177,6 +207,40 @@ export default function LoginPage() {
       setIsLoading(false);
       setGoogleLoadingUser(null);
     }
+  };
+
+  // Personal Google Account Form Submit Handler
+  const handlePersonalGoogleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customGoogleEmail || !customGoogleEmail.includes('@')) {
+      setErrorMessage('Please enter a valid Google email address (e.g. yourname@gmail.com).');
+      return;
+    }
+
+    const cleanEmail = customGoogleEmail.trim().toLowerCase();
+    const cleanName = customGoogleName.trim() || cleanEmail.split('@')[0];
+    const chosenRole = mode === 'signup' ? role : personalRole;
+    const chosenDistrict = mode === 'signup' ? district : personalDistrict;
+
+    const accountObj = {
+      name: cleanName,
+      email: cleanEmail,
+      role: chosenRole,
+      district: chosenDistrict,
+    };
+
+    try {
+      localStorage.setItem('jobzy_personal_google', JSON.stringify(accountObj));
+      setSavedPersonalAccount(accountObj);
+    } catch (err) {}
+
+    await handleGoogleAuth(
+      cleanEmail,
+      cleanName,
+      `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(cleanName)}`,
+      chosenRole,
+      chosenDistrict
+    );
   };
 
   // 1-Click Judge Evaluation Pre-fill
@@ -991,18 +1055,18 @@ export default function LoginPage() {
       {/* Google Account Selector Modal */}
       <AnimatePresence>
         {isGoogleModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/65 backdrop-blur-xs">
             <motion.div
               initial={{ opacity: 0, scale: 0.94, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden"
+              className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               {/* Modal Header */}
-              <div className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between">
+              <div className="p-5 sm:p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between bg-white dark:bg-slate-900 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-xs">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-xs">
                     <GoogleIcon className="w-5 h-5" />
                   </div>
                   <div>
@@ -1010,114 +1074,312 @@ export default function LoginPage() {
                       Sign in with Google
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Choose an account to continue to <span className="font-semibold text-slate-700 dark:text-slate-300">JOBZY</span>
+                      Choose your personal account or an evaluation profile
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsGoogleModalOpen(false);
-                    setShowCustomGoogleInput(false);
-                  }}
+                  onClick={() => setIsGoogleModalOpen(false)}
                   className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Account Selection Body */}
-              <div className="p-4 sm:p-6 space-y-2 max-h-[380px] overflow-y-auto">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1">
-                  1-Click Google Accounts
-                </div>
-
-                {GOOGLE_ACCOUNTS.map((acc) => (
-                  <button
-                    key={acc.email}
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() => handleGoogleAuth(acc.email, acc.name, acc.avatar, acc.role)}
-                    className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all flex items-center gap-3 text-left group"
-                  >
-                    <img
-                      src={acc.avatar}
-                      alt={acc.name}
-                      className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
-                          {acc.name}
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                          {acc.role}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{acc.email}</p>
-                      <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium truncate">{acc.roleTitle}</p>
-                    </div>
-                    {googleLoadingUser === acc.email ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-blue-600 shrink-0" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0" />
-                    )}
-                  </button>
-                ))}
-
-                {/* Custom Google Account Section */}
-                <div className="pt-2">
-                  {!showCustomGoogleInput ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowCustomGoogleInput(true)}
-                      className="w-full py-2.5 px-3 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 flex items-center justify-center gap-2 transition-all"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>Use another Google account</span>
-                    </button>
-                  ) : (
-                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
-                      <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
-                        Enter Custom Google Account
-                      </div>
-                      <input
-                        type="email"
-                        value={customGoogleEmail}
-                        onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                        placeholder="your.email@gmail.com"
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
-                      />
-                      <input
-                        type="text"
-                        value={customGoogleName}
-                        onChange={(e) => setCustomGoogleName(e.target.value)}
-                        placeholder="Your Full Name (optional)"
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
-                      />
-                      <button
-                        type="button"
-                        disabled={isLoading || !customGoogleEmail.includes('@')}
-                        onClick={() => handleGoogleAuth(customGoogleEmail, customGoogleName || customGoogleEmail.split('@')[0])}
-                        className="w-full py-2 px-3 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                      >
-                        {isLoading ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span>Authenticating...</span>
-                          </>
-                        ) : (
-                          <span>Continue with Google</span>
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
+              {/* Mode Switcher Tabs */}
+              <div className="px-5 sm:px-6 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/50 flex gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setGoogleModalTab('personal')}
+                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                    googleModalTab === 'personal'
+                      ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Personal Google Account</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGoogleModalTab('demo')}
+                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                    googleModalTab === 'demo'
+                      ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Judge / Demo Accounts</span>
+                </button>
               </div>
 
-              {/* Modal Footer / Google Disclaimer */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/40 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 dark:text-slate-500 leading-relaxed">
-                To continue, Google shares your profile name, email address, and photo with JOBZY. See JOBZY Privacy Policy and Terms of Service.
+              {/* Modal Body with Custom Scrollbar */}
+              <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
+                {/* -------------------------------------------------------- */}
+                {/* TAB 1: PERSONAL GOOGLE ACCOUNT                           */}
+                {/* -------------------------------------------------------- */}
+                {googleModalTab === 'personal' && (
+                  <div>
+                    {savedPersonalAccount && !isEditingPersonalAccount ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                            Your Saved Google Account
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50">
+                            Ready to Sign In
+                          </span>
+                        </div>
+
+                        {/* Personal Account Card */}
+                        <div className="p-4 rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/20 flex items-center gap-3.5">
+                          <div className="relative">
+                            <img
+                              src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(savedPersonalAccount.name)}`}
+                              alt={savedPersonalAccount.name}
+                              className="w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 shadow-xs bg-white dark:bg-slate-800"
+                            />
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white dark:bg-slate-900 shadow-xs border border-slate-200 dark:border-slate-700 flex items-center justify-center p-0.5">
+                              <GoogleIcon className="w-3.5 h-3.5" />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                                {savedPersonalAccount.name}
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+                                {savedPersonalAccount.role}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-600 dark:text-slate-400 truncate font-medium">{savedPersonalAccount.email}</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-500">{savedPersonalAccount.district}, Maharashtra</p>
+                          </div>
+                        </div>
+
+                        {/* Primary Sign In Button */}
+                        <button
+                          type="button"
+                          disabled={isLoading}
+                          onClick={() => handleGoogleAuth(
+                            savedPersonalAccount.email,
+                            savedPersonalAccount.name,
+                            `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(savedPersonalAccount.name)}`,
+                            savedPersonalAccount.role,
+                            savedPersonalAccount.district
+                          )}
+                          className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2.5 min-h-[46px]"
+                        >
+                          {googleLoadingUser === savedPersonalAccount.email ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Signing in as {savedPersonalAccount.name}...</span>
+                            </>
+                          ) : (
+                            <>
+                              <GoogleIcon className="w-4 h-4" />
+                              <span>Continue as {savedPersonalAccount.name}</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </>
+                          )}
+                        </button>
+
+                        {/* Switch Account Option */}
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingPersonalAccount(true)}
+                          className="w-full py-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center justify-center gap-1.5"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Use a different personal Google account</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <form onSubmit={handlePersonalGoogleSubmit} className="space-y-3.5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                              Choose Your Personal Google Account
+                            </h4>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              Enter your personal Google credentials to sign in or create your verified account.
+                            </p>
+                          </div>
+                          {savedPersonalAccount && (
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingPersonalAccount(false)}
+                              className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Email Input */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Your Personal Google Email
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <GoogleIcon className="w-4 h-4" />
+                            </div>
+                            <input
+                              type="email"
+                              required
+                              value={customGoogleEmail}
+                              onChange={(e) => setCustomGoogleEmail(e.target.value)}
+                              placeholder="your.email@gmail.com"
+                              className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 transition-all"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Full Name Input */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Your Full Name
+                          </label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                              <User className="w-4 h-4" />
+                            </div>
+                            <input
+                              type="text"
+                              required
+                              value={customGoogleName}
+                              onChange={(e) => setCustomGoogleName(e.target.value)}
+                              placeholder="e.g. Uday Soni"
+                              className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 transition-all"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Role Selector */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            Stakeholder Role
+                          </label>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                            {[
+                              { key: 'STUDENT' as UserRole, label: 'Student / Learner' },
+                              { key: 'INDUSTRY' as UserRole, label: 'Industry Hub' },
+                              { key: 'INSTITUTE' as UserRole, label: 'Faculty / Institute' },
+                              { key: 'GOVERNMENT' as UserRole, label: 'Govt. Desk' },
+                            ].map((r) => (
+                              <button
+                                key={r.key}
+                                type="button"
+                                onClick={() => setPersonalRole(r.key)}
+                                className={`py-1.5 px-2 rounded-xl text-[11px] font-semibold border text-center transition-all ${
+                                  personalRole === r.key
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                                }`}
+                              >
+                                {r.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* District Selector */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                            District (Maharashtra)
+                          </label>
+                          <select
+                            value={personalDistrict}
+                            onChange={(e) => setPersonalDistrict(e.target.value)}
+                            className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                          >
+                            {MAHARASHTRA_DISTRICTS.map((d) => (
+                              <option key={d} value={d}>
+                                {d}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                          type="submit"
+                          disabled={isLoading || !customGoogleEmail.includes('@')}
+                          className="w-full py-2.5 sm:py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 mt-2 min-h-[46px]"
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Signing in with Google...</span>
+                            </>
+                          ) : (
+                            <>
+                              <GoogleIcon className="w-4 h-4" />
+                              <span>Continue with Personal Google Account</span>
+                              <ArrowRight className="w-4 h-4" />
+                            </>
+                          )}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                )}
+
+                {/* -------------------------------------------------------- */}
+                {/* TAB 2: DEMO / REVIEWER ACCOUNTS                           */}
+                {/* -------------------------------------------------------- */}
+                {googleModalTab === 'demo' && (
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                      SIH 2026 Evaluation Accounts (1-Click Login)
+                    </div>
+
+                    {GOOGLE_ACCOUNTS.map((acc) => (
+                      <button
+                        key={acc.email}
+                        type="button"
+                        disabled={isLoading}
+                        onClick={() => handleGoogleAuth(acc.email, acc.name, acc.avatar, acc.role, acc.district)}
+                        className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all flex items-center gap-3 text-left group"
+                      >
+                        <img
+                          src={acc.avatar}
+                          alt={acc.name}
+                          className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                              {acc.name}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                              {acc.role}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{acc.email}</p>
+                          <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium truncate">{acc.roleTitle}</p>
+                        </div>
+                        {googleLoadingUser === acc.email ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-blue-600 shrink-0" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer / Google Security Badge */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-850/60 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 dark:text-slate-500 leading-relaxed shrink-0 flex items-center justify-between">
+                <span>Certified for Govt. of Maharashtra SIH 2026</span>
+                <span className="flex items-center gap-1 text-slate-500">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  SSL Protected
+                </span>
               </div>
             </motion.div>
           </div>
