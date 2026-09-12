@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -91,7 +91,7 @@ const GOOGLE_ACCOUNTS = [
   },
 ];
 
-export default function LoginPage() {
+function AuthFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialRedirect = searchParams.get('redirect') || '';
@@ -113,6 +113,21 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [forgotSuccess, setForgotSuccess] = useState(false);
+
+  // Subtle Mouse Parallax on Desktop
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+        const x = ((e.clientX - window.innerWidth / 2) / (window.innerWidth / 2)) * 3;
+        const y = ((e.clientY - window.innerHeight / 2) / (window.innerHeight / 2)) * 3;
+        setMousePos({ x, y });
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   // Google Auth States
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
@@ -256,9 +271,8 @@ export default function LoginPage() {
     e.preventDefault();
     setErrorMessage(null);
 
-    // Human-friendly client validations
     if (!email || !email.includes('@')) {
-      setErrorMessage('Please enter a valid official or institutional email address.');
+      setErrorMessage('Please enter a valid email address.');
       return;
     }
     if (!password) {
@@ -280,7 +294,6 @@ export default function LoginPage() {
       if (res.ok && data.success) {
         setSuccessMessage(`Welcome back, ${data.user.name}`);
 
-        // Short, premium success transition before smooth redirect (600ms)
         setTimeout(() => {
           if (initialRedirect && initialRedirect.startsWith('/') && !initialRedirect.startsWith('/login')) {
             router.push(initialRedirect);
@@ -293,13 +306,13 @@ export default function LoginPage() {
       } else {
         setErrorMessage(
           data.error === 'Invalid email or password'
-            ? "Your email or password doesn't look right. Please check and try again."
+            ? "That email or password doesn't look right. Please try again."
             : data.error || 'Authentication could not be completed. Please check your credentials.'
         );
         setIsLoading(false);
       }
     } catch {
-      setErrorMessage("We couldn't connect right now. Please check your internet connection and try again.");
+      setErrorMessage("We couldn't connect right now. Please try again.");
       setIsLoading(false);
     }
   };
@@ -318,11 +331,11 @@ export default function LoginPage() {
       return;
     }
     if (password.length < 8) {
-      setErrorMessage('Password must contain at least 8 characters.');
+      setErrorMessage('Use at least 8 characters for your password.');
       return;
     }
     if (password !== confirmPassword) {
-      setErrorMessage('Passwords do not match. Please re-enter your password.');
+      setErrorMessage('Passwords do not match. Please re-enter.');
       return;
     }
 
@@ -344,7 +357,7 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        setSuccessMessage('Account created successfully. Setting up your workspace...');
+        setSuccessMessage('Account created successfully. Preparing your JOBZY workspace...');
 
         setTimeout(() => {
           const userRole = role.toLowerCase();
@@ -354,13 +367,13 @@ export default function LoginPage() {
       } else {
         setErrorMessage(
           data.error?.includes('already exists')
-            ? 'An account with this email address already exists. Please sign in instead.'
+            ? 'An account with this email already exists. Please sign in instead.'
             : data.error || 'Registration could not be completed. Please check your details.'
         );
         setIsLoading(false);
       }
     } catch {
-      setErrorMessage("We couldn't connect right now. Please check your internet connection and try again.");
+      setErrorMessage("We couldn't connect right now. Please try again.");
       setIsLoading(false);
     }
   };
@@ -399,681 +412,651 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-3 sm:p-6 lg:p-10 bg-[#f4f7fb] dark:bg-[#070b12] relative overflow-hidden">
-      {/* Subtle Ambient Background Grid & Glows */}
+    <div className="min-h-screen w-full relative flex items-center justify-center p-3 py-8 sm:p-6 lg:p-10 overflow-x-hidden font-body select-none">
+      {/* ================================================================= */}
+      {/* 1. FULL-SCREEN PHOTOGRAPHIC BACKGROUND                            */}
+      {/* ================================================================= */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-40 dark:opacity-20"
+        className="fixed inset-0 z-0 bg-cover bg-center transition-transform duration-1000 ease-out scale-[1.02]"
         style={{
-          backgroundImage: `radial-gradient(rgba(37, 99, 235, 0.15) 1px, transparent 1px)`,
-          backgroundSize: '24px 24px',
+          backgroundImage: `url('https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=2400&auto=format&fit=crop&q=85')`,
         }}
       />
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Main 2-Column Authentication Card (Inspired by Reference) */}
-      <motion.div
-        initial={{ opacity: 0, y: 16, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-5xl rounded-[28px] border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl shadow-slate-900/10 dark:shadow-black/50 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[640px] z-10"
-      >
-        {/* ================================================================= */}
-        {/* LEFT COLUMN: JOBZY Brand Intelligence Panel                      */}
-        {/* ================================================================= */}
-        <div className="lg:col-span-5 bg-[#090d16] text-white p-6 sm:p-8 lg:p-10 flex flex-col justify-between relative overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800">
-          {/* Subtle Background Glows on Brand Panel */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/15 rounded-full blur-3xl pointer-events-none -z-0" />
-          <div className="absolute bottom-0 left-0 w-72 h-72 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none -z-0" />
+      {/* Subtle Navy / Indigo Atmospheric Overlay */}
+      <div
+        className="fixed inset-0 z-1 pointer-events-none"
+        style={{
+          background: `linear-gradient(135deg, rgba(7, 20, 38, 0.84) 0%, rgba(15, 23, 42, 0.78) 50%, rgba(30, 27, 75, 0.86) 100%)`,
+        }}
+      />
 
-          {/* Top Brand Header */}
-          <div className="relative z-10">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-blue-500/30 ring-1 ring-white/20">
-                J
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white">JOBZY</span>
-                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30 uppercase tracking-wide">
-                    Govt. AI Platform
-                  </span>
-                </div>
-                <p className="text-[11px] font-medium text-slate-400">
-                  Govt. of Maharashtra Initiative
-                </p>
-              </div>
+      {/* Subtle Background Ambience & Lighting Depth */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[680px] h-[680px] bg-blue-500/15 rounded-full blur-3xl pointer-events-none z-1" />
+      <div className="absolute bottom-10 right-10 w-[420px] h-[420px] bg-indigo-500/15 rounded-full blur-3xl pointer-events-none z-1" />
+
+      {/* ================================================================= */}
+      {/* 2. DESKTOP TELEMETRY PANEL (>= 1440px composition)                */}
+      {/* ================================================================= */}
+      <div className="hidden 2xl:flex flex-col justify-between absolute left-16 top-16 bottom-16 w-[380px] z-10 text-white pointer-events-none">
+        <div>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-blue-600/30 ring-1 ring-white/30 font-display">
+              J
             </div>
-
-            {/* Main Headline */}
-            <div className="mt-8 sm:mt-12">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400 block mb-2">
-                STATE SKILL INTELLIGENCE NETWORK
-              </span>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white leading-tight">
-                Connecting Industry Signals with Tomorrow&apos;s Skills.
-              </h1>
-              <p className="mt-3 text-xs sm:text-sm text-slate-300 leading-relaxed">
-                AI-powered skill intelligence for government decision-makers, automotive industry, technical institutions, and learners across 36 districts.
-              </p>
-            </div>
-
-            {/* Interactive Minimal Workflow Flow: Industry -> Skills -> Curriculum -> Workforce */}
-            <div className="mt-8 p-4 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-sm">
-              <div className="text-[11px] font-semibold text-slate-300 mb-3 flex items-center justify-between">
-                <span>Continuous Intelligence Loop</span>
-                <span className="flex items-center gap-1 text-[10px] text-emerald-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Live Telemetry
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-xl tracking-tight text-white font-display">JOBZY</span>
+                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-500/25 text-blue-300 border border-blue-400/40 uppercase tracking-wide">
+                  Govt. AI Platform
                 </span>
               </div>
-
-              <div className="grid grid-cols-4 gap-1.5 text-center relative">
-                {[
-                  { label: 'Industry', sub: 'Live Signals', icon: Building2 },
-                  { label: 'Skills', sub: 'NLP Engine', icon: Cpu },
-                  { label: 'Curriculum', sub: 'MSBTE Gap', icon: Layers },
-                  { label: 'Workforce', sub: 'Ready Talent', icon: GraduationCap },
-                ].map((step, idx) => {
-                  const Icon = step.icon;
-                  return (
-                    <div key={step.label} className="flex flex-col items-center">
-                      <div className="w-8 h-8 rounded-lg bg-blue-600/20 border border-blue-400/30 flex items-center justify-center text-blue-400 mb-1">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <span className="text-[11px] font-semibold text-white leading-tight">{step.label}</span>
-                      <span className="text-[9px] text-slate-400">{step.sub}</span>
-                    </div>
-                  );
-                })}
-              </div>
+              <p className="text-xs text-slate-300 font-medium">Govt. of Maharashtra Initiative</p>
             </div>
           </div>
 
-          {/* Bottom Telemetry Pill */}
-          <div className="mt-8 pt-6 border-t border-slate-800/80 relative z-10 text-xs text-slate-400 flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Maharashtra EV Policy 2026</span>
+          <div className="mt-12 space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-400 block">
+              STATE SKILL INTELLIGENCE NETWORK
             </span>
-            <span className="font-semibold text-slate-300">36 Districts Active</span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-white leading-tight font-display">
+              Where Industry Demand Meets Future Skills.
+            </h2>
+            <p className="text-sm text-slate-300 leading-relaxed pt-2">
+              Continuous feedback loop between industry demand signals, AI skill taxonomy, MSBTE curriculum alignment, and technical learner readiness across 36 districts.
+            </p>
+          </div>
+
+          {/* Continuous Loop Pill */}
+          <div className="mt-8 p-4 rounded-2xl bg-white/[0.07] border border-white/15 backdrop-blur-md">
+            <div className="text-xs font-semibold text-slate-200 mb-3 flex items-center justify-between">
+              <span>Continuous Intelligence Loop</span>
+              <span className="flex items-center gap-1.5 text-[10px] text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live Telemetry
+              </span>
+            </div>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              {[
+                { label: 'Industry', sub: 'Signals', icon: Building2 },
+                { label: 'Skills', sub: 'NLP Engine', icon: Cpu },
+                { label: 'Curriculum', sub: 'MSBTE Gap', icon: Layers },
+                { label: 'Workforce', sub: 'Job-Ready', icon: GraduationCap },
+              ].map((step) => {
+                const Icon = step.icon;
+                return (
+                  <div key={step.label} className="flex flex-col items-center">
+                    <div className="w-8 h-8 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300 mb-1.5">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span className="text-[11px] font-semibold text-white">{step.label}</span>
+                    <span className="text-[9px] text-slate-400">{step.sub}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* ================================================================= */}
-        {/* RIGHT COLUMN: Interactive Authentication Form                     */}
-        {/* ================================================================= */}
-        <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-between bg-white dark:bg-slate-900">
-          <div>
-            {/* Top Navigation Tabs: Sign In / Sign Up */}
-            <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl">
-                <button
-                  type="button"
-                  onClick={() => setMode('signin')}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    mode === 'signin'
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMode('signup')}
-                  className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    mode === 'signup'
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  Create Account
-                </button>
-              </div>
+        <div className="pt-6 border-t border-white/10 text-xs text-slate-400 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>Maharashtra EV Policy 2026</span>
+          </span>
+          <span className="font-semibold text-slate-300">36 Districts Active</span>
+        </div>
+      </div>
 
-              <span className="text-[11px] font-medium text-slate-400 hidden sm:inline-block">
-                Secure SSL • Official Access
+      {/* ================================================================= */}
+      {/* 3. CENTERED FROSTED GLASS LOGIN CARD                              */}
+      {/* ================================================================= */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          transform: `translate3d(${mousePos.x}px, ${mousePos.y}px, 0)`,
+        }}
+        className="w-full max-w-[460px] sm:max-w-[480px] rounded-[26px] p-6 sm:p-9 lg:p-10 glass-auth-card text-white relative z-10 my-auto shadow-2xl transition-transform duration-200 ease-out"
+      >
+        {/* Brand Identity Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+          className="flex items-center justify-between pb-5 border-b border-white/15"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-black text-white text-lg shadow-md shadow-blue-500/30 ring-1 ring-white/30 font-display">
+              J
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-base sm:text-lg tracking-tight text-white font-display">JOBZY</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/30 text-blue-200 border border-blue-400/40 uppercase tracking-wide">
+                  Govt. AI
+                </span>
+              </div>
+              <p className="text-[11px] font-medium text-slate-300">Govt. of Maharashtra Initiative</p>
+            </div>
+          </div>
+          <span className="text-[10px] font-semibold text-slate-300 bg-white/10 px-2.5 py-1 rounded-full border border-white/15 hidden sm:inline-block">
+            SSL 256-Bit
+          </span>
+        </motion.div>
+
+        {/* Error Banner */}
+        <AnimatePresence>
+          {errorMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -6, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.98 }}
+              className="mt-4 p-3 rounded-xl bg-red-500/20 border border-red-400/50 flex items-start gap-2.5 text-xs text-red-100 backdrop-blur-md"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-300" />
+              <span className="leading-relaxed font-medium">{errorMessage}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Success Banner */}
+        <AnimatePresence>
+          {successMessage && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mt-4 p-3 rounded-xl bg-emerald-500/20 border border-emerald-400/50 flex items-center gap-2.5 text-xs text-emerald-100 font-medium backdrop-blur-md"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-300 shrink-0" />
+              <span>{successMessage}</span>
+              <Loader2 className="w-3.5 h-3.5 animate-spin ml-auto text-emerald-300" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* =============================================================== */}
+        {/* MODE 1: SIGN IN                                                 */}
+        {/* =============================================================== */}
+        {mode === 'signin' && (
+          <motion.div
+            key="signin"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.3 }}
+            className="mt-6"
+          >
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-blue-300 block mb-1">
+                MAHARASHTRA SKILL INTELLIGENCE PLATFORM
               </span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-display">
+                Welcome back.
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                Sign in to continue to your JOBZY workspace.
+              </p>
             </div>
 
-            {/* Error Banner */}
-            <AnimatePresence>
-              {errorMessage && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  className="mt-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex items-start gap-2.5 text-xs text-red-700 dark:text-red-300"
-                >
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
-                  <span className="leading-relaxed font-medium">{errorMessage}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Success Banner */}
-            <AnimatePresence>
-              {successMessage && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="mt-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 flex items-center gap-2.5 text-xs text-emerald-700 dark:text-emerald-300 font-medium"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span>{successMessage}</span>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin ml-auto text-emerald-600" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* ------------------------------------------------------------- */}
-            {/* MODE 1: SIGN IN FORM                                          */}
-            {/* ------------------------------------------------------------- */}
-            {mode === 'signin' && (
-              <motion.div
-                key="signin"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                transition={{ duration: 0.25 }}
-                className="mt-6"
-              >
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    Welcome back.
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Sign in to access real-time skill intelligence, industry insights, and curriculum recommendations.
-                  </p>
+            <form onSubmit={handleSignIn} className="mt-5 space-y-3.5">
+              {/* Email Field */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-300">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="w-full glass-input h-[52px] sm:h-[54px] rounded-[14px] pl-10 pr-4 text-xs sm:text-sm"
+                  />
                 </div>
+              </div>
 
-                <form onSubmit={handleSignIn} className="mt-6 space-y-4">
-                  {/* Email Field */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <Mail className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="student@skillalign.gov.in"
-                        className="w-full pl-9 pr-4 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Password Field */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        Password
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => setMode('forgot')}
-                        className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
-                      >
-                        Forgot password?
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <Lock className="w-4 h-4" />
-                      </div>
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full pl-9 pr-10 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 transition-all"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Remember Me */}
-                  <div className="flex items-center">
-                    <input
-                      id="remember-me"
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <label htmlFor="remember-me" className="ml-2 text-xs text-slate-600 dark:text-slate-400 select-none">
-                      Keep me authenticated across sessions
-                    </label>
-                  </div>
-
-                  {/* Primary Submit Button */}
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full py-2.5 sm:py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none min-h-[44px]"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Signing you in...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Sign In to JOBZY</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-
-                  {/* Google Sign In Button - Inspired by Reference Screenshot */}
+              {/* Password Field */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-200">
+                    Password
+                  </label>
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsEditingPersonalAccount(!savedPersonalAccount);
-                      setIsGoogleModalOpen(true);
-                    }}
-                    disabled={isLoading}
-                    className="w-full py-2.5 sm:py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 shadow-xs hover:border-slate-300 dark:hover:border-slate-600 transition-all flex items-center justify-center gap-2.5 min-h-[44px] group"
+                    onClick={() => setMode('forgot')}
+                    className="text-xs font-medium text-blue-300 hover:text-white transition-colors"
                   >
-                    <GoogleIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
-                    <span>Sign in with Google</span>
+                    Forgot password?
                   </button>
-                </form>
-
-                {/* Quick Judge Evaluation Pre-fills */}
-                <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Judge Evaluation Accounts (1-Click Fill):
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => fillJudgeAccount('student@skillalign.gov.in', 'STUDENT')}
-                      className="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-left transition-colors flex flex-col"
-                    >
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">Student</span>
-                      <span className="text-[10px] text-slate-500">Aarav (Pune)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fillJudgeAccount('industry@skillalign.gov.in', 'INDUSTRY')}
-                      className="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-left transition-colors flex flex-col"
-                    >
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">Industry</span>
-                      <span className="text-[10px] text-slate-500">Tata Motors Hub</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fillJudgeAccount('faculty@skillalign.gov.in', 'INSTITUTE')}
-                      className="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-left transition-colors flex flex-col"
-                    >
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">Institute</span>
-                      <span className="text-[10px] text-slate-500">GP Pune MSBTE</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => fillJudgeAccount('admin@skillalign.gov.in', 'GOVERNMENT')}
-                      className="p-2 rounded-xl bg-slate-50 hover:bg-blue-50 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-left transition-colors flex flex-col"
-                    >
-                      <span className="font-semibold text-slate-900 dark:text-slate-100">Government</span>
-                      <span className="text-[10px] text-slate-500">DTE Mantralaya</span>
-                    </button>
-                  </div>
                 </div>
-              </motion.div>
-            )}
-
-            {/* ------------------------------------------------------------- */}
-            {/* MODE 2: SIGN UP FORM                                          */}
-            {/* ------------------------------------------------------------- */}
-            {mode === 'signup' && (
-              <motion.div
-                key="signup"
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.25 }}
-                className="mt-6"
-              >
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    Create your account.
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Join Maharashtra&apos;s unified skill intelligence and curriculum alignment network.
-                  </p>
-                </div>
-
-                <form onSubmit={handleSignUp} className="mt-5 space-y-3.5">
-                  {/* Full Name */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Full Name
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <User className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="text"
-                        required
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Raman Sharma"
-                        className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 transition-all"
-                      />
-                    </div>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-300">
+                    <Lock className="w-4 h-4" />
                   </div>
-
-                  {/* Email */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Email Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                        <Mail className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="raman@msbte.edu.in"
-                        className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Role Selector */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Stakeholder Role
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                      {[
-                        { key: 'STUDENT' as UserRole, label: 'Student / Learner' },
-                        { key: 'INDUSTRY' as UserRole, label: 'Industry Hub' },
-                        { key: 'INSTITUTE' as UserRole, label: 'Faculty / Institute' },
-                        { key: 'GOVERNMENT' as UserRole, label: 'Govt. Desk' },
-                      ].map((r) => (
-                        <button
-                          key={r.key}
-                          type="button"
-                          onClick={() => setRole(r.key)}
-                          className={`py-1.5 px-2 rounded-xl text-[11px] font-semibold border text-center transition-all ${
-                            role === r.key
-                              ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                              : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          {r.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* District & Password Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        District (Maharashtra)
-                      </label>
-                      <select
-                        value={district}
-                        onChange={(e) => setDistrict(e.target.value)}
-                        className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
-                      >
-                        {MAHARASHTRA_DISTRICTS.map((d) => (
-                          <option key={d} value={d}>
-                            {d}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Password (8+ chars)
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          required
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="••••••••"
-                          className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
-                        >
-                          {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Confirm Password */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        required
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Submit Button */}
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:pointer-events-none min-h-[44px]"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Setting up your JOBZY workspace...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Create Account</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-
-                  {/* Google Sign Up Button */}
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="w-full glass-input h-[52px] sm:h-[54px] rounded-[14px] pl-10 pr-11 text-xs sm:text-sm"
+                  />
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsEditingPersonalAccount(!savedPersonalAccount);
-                      setIsGoogleModalOpen(true);
-                    }}
-                    disabled={isLoading}
-                    className="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 shadow-xs hover:border-slate-300 dark:hover:border-slate-600 transition-all flex items-center justify-center gap-2.5 min-h-[44px] group"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-300 hover:text-white"
                   >
-                    <GoogleIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
-                    <span>Sign up with Google</span>
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
-                </form>
-              </motion.div>
-            )}
-
-            {/* ------------------------------------------------------------- */}
-            {/* MODE 3: FORGOT PASSWORD                                       */}
-            {/* ------------------------------------------------------------- */}
-            {mode === 'forgot' && (
-              <motion.div
-                key="forgot"
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.25 }}
-                className="mt-6"
-              >
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    Password Recovery
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Enter your registered email address to receive password reset instructions.
-                  </p>
                 </div>
+              </div>
 
-                {forgotSuccess ? (
-                  <div className="mt-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300">
-                    <div className="flex items-center gap-2 font-semibold text-sm mb-1">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                      <span>Recovery Dispatch Sent</span>
-                    </div>
-                    <p className="text-xs leading-relaxed">
-                      If an account is associated with <strong>{email}</strong>, we have dispatched official recovery instructions.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setMode('signin')}
-                      className="mt-4 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors"
-                    >
-                      Return to Sign In
-                    </button>
-                  </div>
+              {/* Remember Me */}
+              <div className="flex items-center pt-0.5">
+                <input
+                  id="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-white/30 bg-white/10 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+                <label htmlFor="remember-me" className="ml-2 text-xs text-slate-300 select-none cursor-pointer">
+                  Keep me authenticated across sessions
+                </label>
+              </div>
+
+              {/* Primary CTA Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-[52px] sm:h-[54px] rounded-[14px] text-xs sm:text-sm font-semibold bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] text-white shadow-xl shadow-blue-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:pointer-events-none mt-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Signing you in...</span>
+                  </>
                 ) : (
-                  <form onSubmit={handleForgotPassword} className="mt-6 space-y-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                        Registered Email Address
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                          <Mail className="w-4 h-4" />
-                        </div>
-                        <input
-                          type="email"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="name@organization.gov.in"
-                          className="w-full pl-9 pr-4 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/80 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 transition-all"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all flex items-center justify-center gap-2 min-h-[44px]"
-                      >
-                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Reset Link'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setMode('signin')}
-                        className="py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors min-h-[44px]"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
+                  <>
+                    <span>Sign In to JOBZY</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
                 )}
-              </motion.div>
-            )}
-          </div>
+              </button>
 
-          {/* Bottom Switcher Footer */}
-          <div className="mt-8 pt-5 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
-            {mode === 'signin' ? (
-              <p>
-                New to JOBZY?{' '}
-                <button
-                  type="button"
-                  onClick={() => setMode('signup')}
-                  className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Create your account
-                </button>
+              {/* Google Sign In Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingPersonalAccount(!savedPersonalAccount);
+                  setIsGoogleModalOpen(true);
+                }}
+                disabled={isLoading}
+                className="w-full h-[50px] rounded-[14px] text-xs sm:text-sm font-semibold bg-white/[0.09] hover:bg-white/[0.16] border border-white/25 text-white shadow-sm transition-all flex items-center justify-center gap-2.5 group"
+              >
+                <GoogleIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+                <span>Sign in with Google</span>
+              </button>
+            </form>
+
+            {/* Quick Judge Evaluation Pre-fills */}
+            <div className="mt-5 pt-4 border-t border-white/15">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300 block mb-2">
+                Judge Evaluation Accounts (1-Click Fill):
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-xs">
+                {[
+                  { label: 'Student', name: 'Aarav (Pune)', email: 'student@skillalign.gov.in', r: 'STUDENT' as UserRole },
+                  { label: 'Industry', name: 'Tata Motors', email: 'industry@skillalign.gov.in', r: 'INDUSTRY' as UserRole },
+                  { label: 'Institute', name: 'GP Pune', email: 'faculty@skillalign.gov.in', r: 'INSTITUTE' as UserRole },
+                  { label: 'Govt.', name: 'DTE Mantralaya', email: 'admin@skillalign.gov.in', r: 'GOVERNMENT' as UserRole },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => fillJudgeAccount(item.email, item.r)}
+                    className="p-2 rounded-xl bg-white/[0.07] hover:bg-white/[0.15] border border-white/15 text-left transition-colors flex flex-col"
+                  >
+                    <span className="font-semibold text-white">{item.label}</span>
+                    <span className="text-[10px] text-slate-300 truncate">{item.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* =============================================================== */}
+        {/* MODE 2: SIGN UP                                                 */}
+        {/* =============================================================== */}
+        {mode === 'signup' && (
+          <motion.div
+            key="signup"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.3 }}
+            className="mt-6"
+          >
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-blue-300 block mb-1">
+                MAHARASHTRA SKILL INTELLIGENCE PLATFORM
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white font-display">
+                Create your account.
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                Join Maharashtra&apos;s skill intelligence ecosystem across 36 districts.
               </p>
-            ) : mode === 'signup' ? (
-              <p>
-                Already have an account?{' '}
+            </div>
+
+            <form onSubmit={handleSignUp} className="mt-5 space-y-3">
+              {/* Full Name */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1">Full Name</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-300">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Raman Sharma"
+                    className="w-full glass-input h-[48px] rounded-[14px] pl-10 pr-4 text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1">Email Address</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-300">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@organization.gov.in"
+                    className="w-full glass-input h-[48px] rounded-[14px] pl-10 pr-4 text-xs sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Role Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1">Stakeholder Role</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {[
+                    { key: 'STUDENT' as UserRole, label: 'Student / Learner' },
+                    { key: 'INDUSTRY' as UserRole, label: 'Industry Hub' },
+                    { key: 'INSTITUTE' as UserRole, label: 'Institute / Faculty' },
+                    { key: 'GOVERNMENT' as UserRole, label: 'Govt. Desk' },
+                  ].map((r) => (
+                    <button
+                      key={r.key}
+                      type="button"
+                      onClick={() => setRole(r.key)}
+                      className={`py-1.5 px-2 rounded-xl text-[11px] font-semibold border text-center transition-all ${
+                        role === r.key
+                          ? 'bg-blue-600 text-white border-blue-400 shadow-sm'
+                          : 'bg-white/[0.07] text-slate-200 border-white/20 hover:bg-white/[0.15]'
+                      }`}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* District & Password */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-200 mb-1">District</label>
+                  <select
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    className="w-full glass-input h-[48px] rounded-[14px] px-3 text-xs bg-slate-900/90 text-white"
+                  >
+                    {MAHARASHTRA_DISTRICTS.map((d) => (
+                      <option key={d} value={d} className="bg-slate-900 text-white">
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-200 mb-1">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full glass-input h-[48px] rounded-[14px] pl-3 pr-9 text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-300 hover:text-white"
+                    >
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1">Confirm Password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full glass-input h-[48px] rounded-[14px] pl-3 pr-9 text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-300 hover:text-white"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-[50px] rounded-[14px] text-xs sm:text-sm font-semibold bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.99] text-white shadow-xl shadow-blue-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-60 mt-2"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Setting up workspace...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Create Account</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+
+              {/* Google Sign Up Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingPersonalAccount(!savedPersonalAccount);
+                  setIsGoogleModalOpen(true);
+                }}
+                disabled={isLoading}
+                className="w-full h-[48px] rounded-[14px] text-xs sm:text-sm font-semibold bg-white/[0.09] hover:bg-white/[0.16] border border-white/25 text-white shadow-sm transition-all flex items-center justify-center gap-2.5 group"
+              >
+                <GoogleIcon className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+                <span>Sign up with Google</span>
+              </button>
+            </form>
+          </motion.div>
+        )}
+
+        {/* =============================================================== */}
+        {/* MODE 3: FORGOT PASSWORD                                         */}
+        {/* =============================================================== */}
+        {mode === 'forgot' && (
+          <motion.div
+            key="forgot"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.25 }}
+            className="mt-6"
+          >
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-display">
+                Reset your password.
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                Enter your registered official email address to receive password recovery instructions.
+              </p>
+            </div>
+
+            {forgotSuccess ? (
+              <div className="mt-6 p-4 rounded-2xl bg-emerald-500/25 border border-emerald-400/50 text-emerald-100 backdrop-blur-md">
+                <div className="flex items-center gap-2 font-semibold text-sm mb-1">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-300" />
+                  <span>Check your inbox for reset instructions</span>
+                </div>
+                <p className="text-xs text-slate-200 leading-relaxed">
+                  If an account is associated with <strong>{email}</strong>, we have dispatched official recovery instructions.
+                </p>
                 <button
                   type="button"
                   onClick={() => setMode('signin')}
-                  className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+                  className="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
                 >
-                  Sign in here
+                  Return to Sign In
                 </button>
-              </p>
+              </div>
             ) : (
-              <p>
-                Remembered your password?{' '}
-                <button
-                  type="button"
-                  onClick={() => setMode('signin')}
-                  className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  Back to Sign In
-                </button>
-              </p>
+              <form onSubmit={handleForgotPassword} className="mt-6 space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+                    Registered Email Address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-300">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@organization.gov.in"
+                      className="w-full glass-input h-[52px] rounded-[14px] pl-10 pr-4 text-xs sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="flex-1 h-[50px] rounded-[14px] text-xs sm:text-sm font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white transition-all flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Reset Link'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode('signin')}
+                    className="h-[50px] px-4 rounded-[14px] text-xs sm:text-sm font-semibold border border-white/25 hover:bg-white/10 text-slate-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             )}
-          </div>
+          </motion.div>
+        )}
+
+        {/* Bottom Switcher Footer */}
+        <div className="mt-6 pt-4 border-t border-white/15 text-center text-xs text-slate-300">
+          {mode === 'signin' ? (
+            <p>
+              Don&apos;t have an account?{' '}
+              <button
+                type="button"
+                onClick={() => setMode('signup')}
+                className="font-bold text-blue-300 hover:text-white underline underline-offset-4 transition-colors"
+              >
+                Create your JOBZY account
+              </button>
+            </p>
+          ) : mode === 'signup' ? (
+            <p>
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={() => setMode('signin')}
+                className="font-bold text-blue-300 hover:text-white underline underline-offset-4 transition-colors"
+              >
+                Sign in here
+              </button>
+            </p>
+          ) : (
+            <p>
+              Remembered your password?{' '}
+              <button
+                type="button"
+                onClick={() => setMode('signin')}
+                className="font-bold text-blue-300 hover:text-white underline underline-offset-4 transition-colors"
+              >
+                Back to Sign In
+              </button>
+            </p>
+          )}
         </div>
       </motion.div>
 
-      {/* Google Account Selector Modal */}
+      {/* ================================================================= */}
+      {/* 4. GOOGLE ACCOUNT SELECTOR MODAL DIALOG                           */}
+      {/* ================================================================= */}
       <AnimatePresence>
         {isGoogleModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/65 backdrop-blur-xs">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.94, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="w-full max-w-lg bg-slate-900/90 rounded-3xl border border-white/20 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-white backdrop-blur-xl"
             >
               {/* Modal Header */}
-              <div className="p-5 sm:p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between bg-white dark:bg-slate-900 shrink-0">
+              <div className="p-5 sm:p-6 pb-4 border-b border-white/10 flex items-start justify-between bg-slate-950/50 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-xs">
+                  <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shadow-xs">
                     <GoogleIcon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-base font-bold text-white font-display">
                       Sign in with Google
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-slate-300">
                       Choose your personal account or an evaluation profile
                     </p>
                   </div>
@@ -1081,21 +1064,21 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setIsGoogleModalOpen(false)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               {/* Mode Switcher Tabs */}
-              <div className="px-5 sm:px-6 pt-3 pb-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850/50 flex gap-2 shrink-0">
+              <div className="px-5 sm:px-6 pt-3 pb-2 border-b border-white/10 bg-white/[0.04] flex gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setGoogleModalTab('personal')}
                   className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                     googleModalTab === 'personal'
-                      ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-slate-300 hover:text-white bg-white/5'
                   }`}
                 >
                   <User className="w-3.5 h-3.5" />
@@ -1106,8 +1089,8 @@ export default function LoginPage() {
                   onClick={() => setGoogleModalTab('demo')}
                   className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                     googleModalTab === 'demo'
-                      ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs border border-slate-200/80 dark:border-slate-700'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-slate-300 hover:text-white bg-white/5'
                   }`}
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
@@ -1125,37 +1108,37 @@ export default function LoginPage() {
                     {savedPersonalAccount && !isEditingPersonalAccount ? (
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
                             Your Saved Google Account
                           </span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
                             Ready to Sign In
                           </span>
                         </div>
 
                         {/* Personal Account Card */}
-                        <div className="p-4 rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/40 dark:bg-blue-950/20 flex items-center gap-3.5">
+                        <div className="p-4 rounded-2xl border border-blue-400/30 bg-blue-600/15 flex items-center gap-3.5">
                           <div className="relative">
                             <img
                               src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(savedPersonalAccount.name)}`}
                               alt={savedPersonalAccount.name}
-                              className="w-12 h-12 rounded-full border-2 border-white dark:border-slate-800 shadow-xs bg-white dark:bg-slate-800"
+                              className="w-12 h-12 rounded-full border-2 border-white/40 shadow-xs bg-slate-800"
                             />
-                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white dark:bg-slate-900 shadow-xs border border-slate-200 dark:border-slate-700 flex items-center justify-center p-0.5">
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white shadow-xs flex items-center justify-center p-0.5">
                               <GoogleIcon className="w-3.5 h-3.5" />
                             </div>
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                              <span className="font-bold text-sm text-white truncate font-display">
                                 {savedPersonalAccount.name}
                               </span>
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/30 text-blue-200 border border-blue-400/30">
                                 {savedPersonalAccount.role}
                               </span>
                             </div>
-                            <p className="text-xs text-slate-600 dark:text-slate-400 truncate font-medium">{savedPersonalAccount.email}</p>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-500">{savedPersonalAccount.district}, Maharashtra</p>
+                            <p className="text-xs text-slate-300 truncate font-medium">{savedPersonalAccount.email}</p>
+                            <p className="text-[11px] text-slate-400">{savedPersonalAccount.district}, Maharashtra</p>
                           </div>
                         </div>
 
@@ -1170,7 +1153,7 @@ export default function LoginPage() {
                             savedPersonalAccount.role,
                             savedPersonalAccount.district
                           )}
-                          className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2.5 min-h-[46px]"
+                          className="w-full h-[50px] rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2.5"
                         >
                           {googleLoadingUser === savedPersonalAccount.email ? (
                             <>
@@ -1190,7 +1173,7 @@ export default function LoginPage() {
                         <button
                           type="button"
                           onClick={() => setIsEditingPersonalAccount(true)}
-                          className="w-full py-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center justify-center gap-1.5"
+                          className="w-full py-2 text-xs font-semibold text-blue-300 hover:text-white transition-colors flex items-center justify-center gap-1.5"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>Use a different personal Google account</span>
@@ -1200,10 +1183,10 @@ export default function LoginPage() {
                       <form onSubmit={handlePersonalGoogleSubmit} className="space-y-3.5">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                            <h4 className="text-xs sm:text-sm font-bold text-white font-display">
                               Choose Your Personal Google Account
                             </h4>
-                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                            <p className="text-[11px] text-slate-300 mt-0.5">
                               Enter your personal Google credentials to sign in or create your verified account.
                             </p>
                           </div>
@@ -1211,7 +1194,7 @@ export default function LoginPage() {
                             <button
                               type="button"
                               onClick={() => setIsEditingPersonalAccount(false)}
-                              className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                              className="text-xs font-semibold text-slate-400 hover:text-white"
                             >
                               Cancel
                             </button>
@@ -1220,7 +1203,7 @@ export default function LoginPage() {
 
                         {/* Email Input */}
                         <div>
-                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          <label className="block text-xs font-semibold text-slate-200 mb-1">
                             Your Personal Google Email
                           </label>
                           <div className="relative">
@@ -1233,18 +1216,18 @@ export default function LoginPage() {
                               value={customGoogleEmail}
                               onChange={(e) => setCustomGoogleEmail(e.target.value)}
                               placeholder="your.email@gmail.com"
-                              className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 transition-all"
+                              className="w-full glass-input h-[48px] rounded-xl pl-9 pr-3 text-xs sm:text-sm"
                             />
                           </div>
                         </div>
 
                         {/* Full Name Input */}
                         <div>
-                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          <label className="block text-xs font-semibold text-slate-200 mb-1">
                             Your Full Name
                           </label>
                           <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-300">
                               <User className="w-4 h-4" />
                             </div>
                             <input
@@ -1253,21 +1236,21 @@ export default function LoginPage() {
                               value={customGoogleName}
                               onChange={(e) => setCustomGoogleName(e.target.value)}
                               placeholder="e.g. Uday Soni"
-                              className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 transition-all"
+                              className="w-full glass-input h-[48px] rounded-xl pl-9 pr-3 text-xs sm:text-sm"
                             />
                           </div>
                         </div>
 
                         {/* Role Selector */}
                         <div>
-                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          <label className="block text-xs font-semibold text-slate-200 mb-1">
                             Stakeholder Role
                           </label>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                             {[
                               { key: 'STUDENT' as UserRole, label: 'Student / Learner' },
                               { key: 'INDUSTRY' as UserRole, label: 'Industry Hub' },
-                              { key: 'INSTITUTE' as UserRole, label: 'Faculty / Institute' },
+                              { key: 'INSTITUTE' as UserRole, label: 'Institute / Faculty' },
                               { key: 'GOVERNMENT' as UserRole, label: 'Govt. Desk' },
                             ].map((r) => (
                               <button
@@ -1276,8 +1259,8 @@ export default function LoginPage() {
                                 onClick={() => setPersonalRole(r.key)}
                                 className={`py-1.5 px-2 rounded-xl text-[11px] font-semibold border text-center transition-all ${
                                   personalRole === r.key
-                                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                                    ? 'bg-blue-600 text-white border-blue-400 shadow-sm'
+                                    : 'bg-white/5 text-slate-300 border-white/20 hover:bg-white/10'
                                 }`}
                               >
                                 {r.label}
@@ -1288,16 +1271,16 @@ export default function LoginPage() {
 
                         {/* District Selector */}
                         <div>
-                          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                          <label className="block text-xs font-semibold text-slate-200 mb-1">
                             District (Maharashtra)
                           </label>
                           <select
                             value={personalDistrict}
                             onChange={(e) => setPersonalDistrict(e.target.value)}
-                            className="w-full px-3 py-2 text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
+                            className="w-full glass-input h-[48px] rounded-xl px-3 text-xs bg-slate-900 text-white"
                           >
                             {MAHARASHTRA_DISTRICTS.map((d) => (
-                              <option key={d} value={d}>
+                              <option key={d} value={d} className="bg-slate-900 text-white">
                                 {d}
                               </option>
                             ))}
@@ -1308,7 +1291,7 @@ export default function LoginPage() {
                         <button
                           type="submit"
                           disabled={isLoading || !customGoogleEmail.includes('@')}
-                          className="w-full py-2.5 sm:py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white shadow-lg shadow-blue-600/25 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 mt-2 min-h-[46px]"
+                          className="w-full h-[50px] rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2.5 disabled:opacity-50 mt-2"
                         >
                           {isLoading ? (
                             <>
@@ -1333,7 +1316,7 @@ export default function LoginPage() {
                 {/* -------------------------------------------------------- */}
                 {googleModalTab === 'demo' && (
                   <div className="space-y-2">
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
                       SIH 2026 Evaluation Accounts (1-Click Login)
                     </div>
 
@@ -1343,29 +1326,29 @@ export default function LoginPage() {
                         type="button"
                         disabled={isLoading}
                         onClick={() => handleGoogleAuth(acc.email, acc.name, acc.avatar, acc.role, acc.district)}
-                        className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all flex items-center gap-3 text-left group"
+                        className="w-full p-3 rounded-2xl border border-white/15 hover:border-blue-400 bg-white/[0.05] hover:bg-white/[0.12] transition-all flex items-center gap-3 text-left group"
                       >
                         <img
                           src={acc.avatar}
                           alt={acc.name}
-                          className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 shrink-0"
+                          className="w-10 h-10 rounded-full object-cover border border-white/20 shrink-0 bg-slate-800"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                            <span className="font-bold text-xs sm:text-sm text-white truncate font-display">
                               {acc.name}
                             </span>
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-white/15 text-blue-300 border border-white/10">
                               {acc.role}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{acc.email}</p>
-                          <p className="text-[10px] text-blue-600 dark:text-blue-400 font-medium truncate">{acc.roleTitle}</p>
+                          <p className="text-xs text-slate-300 truncate">{acc.email}</p>
+                          <p className="text-[10px] text-blue-300 font-medium truncate">{acc.roleTitle}</p>
                         </div>
                         {googleLoadingUser === acc.email ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-blue-600 shrink-0" />
+                          <Loader2 className="w-4 h-4 animate-spin text-blue-400 shrink-0" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all shrink-0" />
+                          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-300 group-hover:translate-x-0.5 transition-all shrink-0" />
                         )}
                       </button>
                     ))}
@@ -1373,11 +1356,11 @@ export default function LoginPage() {
                 )}
               </div>
 
-              {/* Modal Footer / Google Security Badge */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-850/60 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 dark:text-slate-500 leading-relaxed shrink-0 flex items-center justify-between">
+              {/* Modal Footer */}
+              <div className="p-4 bg-slate-950/60 border-t border-white/10 text-[10px] text-slate-400 leading-relaxed shrink-0 flex items-center justify-between">
                 <span>Certified for Govt. of Maharashtra SIH 2026</span>
-                <span className="flex items-center gap-1 text-slate-500">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="flex items-center gap-1 text-slate-300">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   SSL Protected
                 </span>
               </div>
@@ -1386,5 +1369,23 @@ export default function LoginPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#071426] text-white p-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-black text-white text-2xl shadow-xl shadow-blue-500/30 ring-1 ring-white/30 font-display mb-4">
+            J
+          </div>
+          <p className="text-sm font-bold tracking-tight text-white font-display">JOBZY</p>
+          <p className="text-xs text-slate-400 mt-1">Preparing your workspace...</p>
+        </div>
+      }
+    >
+      <AuthFormContent />
+    </Suspense>
   );
 }
