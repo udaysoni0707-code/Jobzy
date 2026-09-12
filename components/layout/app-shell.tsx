@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Sidebar } from './sidebar';
 import { TopHeader } from './top-header';
 import { Footer } from './footer';
@@ -17,6 +18,22 @@ interface AppShellProps {
 
 export function AppShell({ children, currentUser }: AppShellProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const pathname = usePathname() || '';
+
+  // Check if current route is an authentication portal route
+  const isAuthRoute =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/forgot-password');
+
+  // If on authentication pages or no authenticated session, render clean standalone view without dashboard navigation
+  if (isAuthRoute || !currentUser) {
+    return (
+      <main className="min-h-screen w-full bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden">
+        {children}
+      </main>
+    );
+  }
 
   return (
     <div className="min-h-screen flex w-full bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 antialiased overflow-x-hidden">

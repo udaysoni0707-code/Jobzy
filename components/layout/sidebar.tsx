@@ -64,10 +64,10 @@ export function Sidebar({ isOpen, onClose, currentUser }: SidebarProps) {
       await fetch('/api/auth/logout', { method: 'POST' });
       toast.info('Logged out successfully', 'You have ended your active session.');
       onClose();
-      router.push('/');
+      router.push('/login');
       router.refresh();
     } catch {
-      router.push('/');
+      router.push('/login');
     }
   };
 

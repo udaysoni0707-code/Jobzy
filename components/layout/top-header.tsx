@@ -71,10 +71,10 @@ export function TopHeader({ onOpenMobileMenu, currentUser }: TopHeaderProps) {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       toast.info('Logged out successfully', 'You have ended your active session.');
-      router.push('/');
+      router.push('/login');
       router.refresh();
     } catch {
-      router.push('/');
+      router.push('/login');
     }
   };
 
