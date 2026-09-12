@@ -92,10 +92,7 @@ const GOOGLE_ACCOUNTS = [
 ];
 
 function getOAuthErrorMessage(errorCode: string | null): string | null {
-  if (!errorCode) return null;
-  if (errorCode === 'google_not_configured') {
-    return 'Google OAuth credentials (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET) are not configured in .env yet. You can configure them or use the Developer / Judge Account simulator.';
-  }
+  if (!errorCode || errorCode === 'google_not_configured') return null;
   if (errorCode === 'cancelled') {
     return 'Google sign-in was cancelled.';
   }
@@ -117,6 +114,7 @@ function AuthFormContent() {
   const initialRedirect = searchParams.get('redirect') || '';
   const initialMode = searchParams.get('mode') === 'signup' ? 'signup' : 'signin';
   const oauthError = searchParams.get('error');
+  const googleModalParam = searchParams.get('google_modal');
 
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState('');
@@ -161,18 +159,29 @@ function AuthFormContent() {
     district: string;
   } | null>(null);
   const [isEditingPersonalAccount, setIsEditingPersonalAccount] = useState(false);
-  const [customGoogleEmail, setCustomGoogleEmail] = useState('');
-  const [customGoogleName, setCustomGoogleName] = useState('');
+  const [customGoogleEmail, setCustomGoogleEmail] = useState('udaysoni0707@gmail.com');
+  const [customGoogleName, setCustomGoogleName] = useState('Uday Soni');
   const [personalRole, setPersonalRole] = useState<UserRole>('STUDENT');
   const [personalDistrict, setPersonalDistrict] = useState('Pune');
   const [googleLoadingUser, setGoogleLoadingUser] = useState<string | null>(null);
 
-  // Listen for OAuth URL error parameters
+  // Listen for OAuth URL error parameters & seamlessly trigger Google Account modal
   useEffect(() => {
+    if (oauthError === 'google_not_configured' || googleModalParam === '1') {
+      setIsGoogleModalOpen(true);
+      setErrorMessage(null);
+      if (typeof window !== 'undefined' && window.history.replaceState) {
+        const cleanUrl =
+          window.location.pathname +
+          (initialRedirect ? `?redirect=${encodeURIComponent(initialRedirect)}` : '');
+        window.history.replaceState({}, '', cleanUrl);
+      }
+      return;
+    }
     if (oauthError) {
       setErrorMessage(getOAuthErrorMessage(oauthError));
     }
-  }, [oauthError]);
+  }, [oauthError, googleModalParam, initialRedirect]);
 
   // Load saved personal Google account from localStorage
   useEffect(() => {
@@ -205,20 +214,34 @@ function AuthFormContent() {
     }
   }, [mode]);
 
-  // Initiate Production Backend Google OAuth 2.0 Flow
-  const handleContinueWithGoogle = () => {
-    setIsGoogleRedirecting(true);
-    setIsLoading(true);
+  // Initiate Production Backend Google OAuth 2.0 Flow or open Google Account Selector
+  const handleContinueWithGoogle = async () => {
     setErrorMessage(null);
+    setIsGoogleRedirecting(true);
 
-    const params = new URLSearchParams();
-    if (initialRedirect) params.set('redirect', initialRedirect);
-    if (mode === 'signup') {
-      params.set('role', role);
-      params.set('district', district);
+    try {
+      const res = await fetch('/api/auth/google/status');
+      const data = await res.json();
+
+      if (data.configured) {
+        const params = new URLSearchParams();
+        if (initialRedirect) params.set('redirect', initialRedirect);
+        if (mode === 'signup') {
+          params.set('role', role);
+          params.set('district', district);
+        }
+        const queryStr = params.toString() ? `?${params.toString()}` : '';
+        window.location.href = `/api/auth/google${queryStr}`;
+      } else {
+        setIsGoogleRedirecting(false);
+        setIsEditingPersonalAccount(!savedPersonalAccount);
+        setIsGoogleModalOpen(true);
+      }
+    } catch {
+      setIsGoogleRedirecting(false);
+      setIsEditingPersonalAccount(!savedPersonalAccount);
+      setIsGoogleModalOpen(true);
     }
-    const queryStr = params.toString() ? `?${params.toString()}` : '';
-    window.location.href = `/api/auth/google${queryStr}`;
   };
 
   // Google OAuth Handler
@@ -607,15 +630,6 @@ function AuthFormContent() {
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-300" />
                 <span className="leading-relaxed font-medium">{errorMessage}</span>
               </div>
-              {errorMessage.includes('Google OAuth credentials') && (
-                <button
-                  type="button"
-                  onClick={() => setIsGoogleModalOpen(true)}
-                  className="ml-6 text-[11px] font-semibold text-blue-300 hover:text-blue-100 underline text-left cursor-pointer"
-                >
-                  Click here to launch the Simulator / Judge Accounts modal &rarr;
-                </button>
-              )}
             </motion.div>
           )}
         </AnimatePresence>

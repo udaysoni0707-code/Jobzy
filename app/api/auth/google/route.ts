@@ -20,10 +20,10 @@ export async function GET(req: NextRequest) {
   const role = searchParams.get('role') || 'STUDENT';
   const district = searchParams.get('district') || 'Pune';
 
-  // If credentials are not configured in .env, redirect back to login with friendly error
+  // If credentials are not configured in .env, seamlessly open Google Account Selector modal
   if (!isGoogleOAuthConfigured()) {
     const loginUrl = new URL('/login', req.url);
-    loginUrl.searchParams.set('error', 'google_not_configured');
+    loginUrl.searchParams.set('google_modal', '1');
     if (redirectTarget) {
       loginUrl.searchParams.set('redirect', redirectTarget);
     }
