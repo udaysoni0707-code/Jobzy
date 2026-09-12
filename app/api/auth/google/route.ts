@@ -89,13 +89,19 @@ export async function POST(req: NextRequest) {
       include: { profile: true },
     });
 
-    // If user exists, link Google ID if not already linked
+    // If user exists, link Google ID and update role if explicitly chosen in modal
     if (user) {
-      if (googleId && !user.googleId) {
+      const shouldUpdateRole =
+        role &&
+        role !== user.role &&
+        ['STUDENT', 'INDUSTRY', 'INSTITUTE', 'GOVERNMENT'].includes(role);
+
+      if ((googleId && !user.googleId) || shouldUpdateRole) {
         user = await db.user.update({
           where: { id: user.id },
           data: {
-            googleId,
+            ...(googleId && !user.googleId ? { googleId } : {}),
+            ...(shouldUpdateRole ? { role: role as any } : {}),
             avatarUrl: user.avatarUrl || avatarUrl,
             isVerified: true,
           },
